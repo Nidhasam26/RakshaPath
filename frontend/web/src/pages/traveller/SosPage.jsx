@@ -129,6 +129,8 @@ export function SosPage({ defaultCountdownSeconds = 5 }) {
 
       setActiveAlert(queuedAlert)
       sosService.addHistoryItem(user?.id, queuedAlert)
+      sosService.dispatchToPoliceFeed(queuedAlert, user)
+      sosService.notifyAuthorizedFamily(queuedAlert, user)
       refreshHistory()
 
       // Step 3: Sent (simulated) — ONLY if online! If offline, do NOT falsely claim sent!
@@ -154,6 +156,7 @@ export function SosPage({ defaultCountdownSeconds = 5 }) {
           setActiveAlert(sentAlert)
           sosService.addHistoryItem(user?.id, sentAlert)
           sosService.dispatchToPoliceFeed(sentAlert, user)
+          sosService.notifyAuthorizedFamily(sentAlert, user)
           refreshHistory()
         }, step3Delay)
       }
@@ -241,6 +244,7 @@ export function SosPage({ defaultCountdownSeconds = 5 }) {
     setActiveAlert(updatedAlert)
     sosService.addHistoryItem(user?.id, updatedAlert)
     sosService.dispatchToPoliceFeed(updatedAlert, user)
+    sosService.notifyAuthorizedFamily(updatedAlert, user)
     refreshHistory()
   }
 

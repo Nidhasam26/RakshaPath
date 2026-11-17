@@ -1,4 +1,4 @@
-import { useState, lazy, Suspense } from 'react'
+import { useState, useEffect, lazy, Suspense } from 'react'
 import {
   Activity,
   AlertTriangle,
@@ -18,6 +18,9 @@ import {
 import useLocalStorage from '../../hooks/useLocalStorage'
 import PageHeader from '../../components/PageHeader'
 import { demoPoliceAlerts } from '../../data/demoData'
+import { sosService } from '../../services/sosService'
+import storageService from '../../services/storageService'
+import { POLICE_ALERTS_KEY } from '../../services/mockApi'
 
 const PoliceAnalyticsCharts = lazy(() => import('../../components/police/PoliceAnalyticsCharts'))
 const PoliceIncidentMap = lazy(() => import('../../components/police/PoliceIncidentMap'))
@@ -36,6 +39,18 @@ function PoliceDashboard({ overview = false }) {
   const [categoryFilter, setCategoryFilter] = useState('All')
   const [selectedId, setSelectedId] = useState(alerts[0]?.id)
 
+  // Real-time synchronization when SOS alerts are confirmed or updated across components
+  useEffect(() => {
+    const handleUpdate = () => {
+      const fresh = storageService.get(POLICE_ALERTS_KEY, demoPoliceAlerts)
+      setAlerts(fresh)
+    }
+    window.addEventListener('rakshapath:police_alerts_updated', handleUpdate)
+    return () => {
+      window.removeEventListener('rakshapath:police_alerts_updated', handleUpdate)
+    }
+  }, [setAlerts])
+
   const activeCount = alerts.filter((item) => item.status !== 'Resolved').length
 
   // Filter alerts safely handling missing/legacy fields
@@ -49,25 +64,11 @@ function PoliceDashboard({ overview = false }) {
     return true
   })
 
-  const selected = visible.find((item) => item.id === selectedId) || visible[0] || alerts[0]
+  const selected = visible.find((item) => item.id === selectedId) || visible[0] || (alerts.length > 0 ? alerts[0] : null)
 
   const updateStatus = (id, newStatus) => {
-    setAlerts((items) =>
-      items.map((item) => {
-        if (item.id !== id) return item
-        const existingHistory = Array.isArray(item.history) ? item.history : []
-        const historyEntry = {
-          status: newStatus,
-          timestamp: new Date().toISOString(),
-          note: `Incident marked as ${newStatus} by field console`,
-        }
-        return {
-          ...item,
-          status: newStatus,
-          history: [...existingHistory, historyEntry],
-        }
-      })
-    )
+    const updated = sosService.updateIncidentStatus(id, newStatus, 'Police Console')
+    setAlerts(updated)
   }
 
   const selectedSeverity = selected?.severity || (selected?.category === 'Hazard Report' ? 'Medium' : 'Critical')
@@ -253,7 +254,15 @@ function PoliceDashboard({ overview = false }) {
 
           {/* Incident row items */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            {!visible.length ? (
+            {!alerts.length ? (
+              <div className="empty-state">
+                <ShieldCheck size={24} color="var(--mint)" />
+                <strong>No incidents in active queue</strong>
+                <span className="muted" style={{ fontSize: 11 }}>
+                  All simulated corridors and traveller distress signals are clear.
+                </span>
+              </div>
+            ) : !visible.length ? (
               <div className="empty-state">
                 <ShieldCheck size={21} />
                 <strong>No records matching current filters</strong>
@@ -460,7 +469,13 @@ function PoliceDashboard({ overview = false }) {
               </div>
             </>
           ) : (
-            <div className="empty-state">Select an incident to inspect details</div>
+            <div className="empty-state" style={{ padding: '40px 16px' }}>
+              <ShieldAlert size={24} color="var(--muted)" />
+              <strong style={{ display: 'block', margin: '8px 0 4px' }}>No incident selected</strong>
+              <span className="muted" style={{ fontSize: 11 }}>
+                Select an incident from the assistance queue to inspect telemetry, responder actions, and coordinates.
+              </span>
+            </div>
           )}
         </article>
       </section>

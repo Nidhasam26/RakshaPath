@@ -556,6 +556,12 @@ a {
   background: rgba(255, 119, 124, .07);
 }
 
+.pill-amber {
+  border-color: rgba(255, 198, 109, .2);
+  color: var(--amber, #ffc66d);
+  background: rgba(255, 198, 109, .07);
+}
+
 .muted {
   color: var(--muted);
 }

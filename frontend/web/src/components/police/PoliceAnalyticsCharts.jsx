@@ -61,7 +61,7 @@ export function PoliceAnalyticsCharts({ incidents = [] }) {
       className="police-analytics-grid"
       style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 250px), 1fr))',
         gap: 16,
         marginBottom: 16,
       }}

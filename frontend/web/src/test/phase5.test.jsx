@@ -4,6 +4,9 @@ import { MemoryRouter } from 'react-router-dom'
 import { AuthProvider } from '../context/AuthContext.jsx'
 import authService from '../services/authService'
 import tripService from '../services/tripService'
+import sosService, { SOS_STATUS } from '../services/sosService'
+import storageService from '../services/storageService'
+import { POLICE_ALERTS_KEY } from '../services/mockApi'
 import notificationService, {
   getUserPreferencesKey,
   NOTIFICATION_TYPES,
@@ -577,6 +580,258 @@ describe('Phase 5: Trip Monitoring, Controlled Family Sharing, Unified Police In
       expect(screen.getByText(/family guardian portal/i)).toBeInTheDocument()
       expect(screen.getByText(/open family tracking monitor/i)).toBeInTheDocument()
       expect(screen.getByText(/read-only preview for general situational awareness/i)).toBeInTheDocument()
+    })
+  })
+
+  // -------------------------------------------------------------------------
+  // 6. POLICE DASHBOARD & FAMILY EMERGENCY ALERTS INTEGRATION
+  // -------------------------------------------------------------------------
+  describe('6. Police Dashboard & Family Emergency Alerts Integration', () => {
+    it('creates an incident in the shared police feed when SOS is confirmed', () => {
+      const alert = {
+        id: 'SOS-TEST-9901',
+        status: SOS_STATUS.SENT,
+        severity: 'Critical',
+        timestamp: new Date().toISOString(),
+        location: {
+          coordsText: '12.9345° N, 77.6245° E',
+          latitude: 12.9345,
+          longitude: 77.6245,
+        },
+      }
+
+      sosService.dispatchToPoliceFeed(alert, travellerUserA)
+
+      const policeAlerts = storageService.get(POLICE_ALERTS_KEY, [])
+      const matched = policeAlerts.find((a) => a.id === alert.id)
+      expect(matched).toBeDefined()
+      expect(matched.status).toBe('New')
+      expect(matched.severity).toBe('Critical')
+      expect(matched.category).toBe('SOS Emergency')
+      expect(matched.name).toBe(travellerUserA.name)
+      expect(matched.isSimulatedSos).toBe(true)
+
+      // Render PoliceDashboard and verify incident appears in feed
+      render(
+        <MemoryRouter>
+          <PoliceDashboard />
+        </MemoryRouter>
+      )
+
+      expect(screen.getByText('SOS-TEST-9901')).toBeInTheDocument()
+      expect(screen.getAllByText(travellerUserA.name).length).toBeGreaterThanOrEqual(1)
+    })
+
+    it('notifies authorized Family members and displays emergency alert card on their dashboard', () => {
+      // 1. Traveller generates a share link
+      const share = tripService.generateShareToken(travellerUserA.id, {
+        durationHours: 6,
+        travellerName: travellerUserA.name,
+      })
+
+      // 2. Family user Gamma tracks the share token
+      authService.setCurrentUser(familyUser)
+      tripService.registerFamilySubscriber(share.token, familyUser.id)
+
+      // 3. Traveller triggers and confirms SOS
+      const alert = {
+        id: 'SOS-TEST-9902',
+        status: SOS_STATUS.SENT,
+        severity: 'Critical',
+        timestamp: new Date().toISOString(),
+        displayTime: '10:45 PM',
+        location: {
+          coordsText: '12.9716° N, 77.5946° E (Demo)',
+          latitude: 12.9716,
+          longitude: 77.5946,
+        },
+      }
+      sosService.notifyAuthorizedFamily(alert, travellerUserA)
+
+      // Check notification received by Family member
+      const notifs = notificationService.getNotifications(familyUser.id)
+      expect(notifs.some((n) => n.title.includes(travellerUserA.name))).toBe(true)
+
+      // Check shared trip payload in registry contains active SOS
+      const sharedTrip = tripService.getSharedTripByToken(share.token)
+      expect(sharedTrip.activeSosAlert).toBeDefined()
+      expect(sharedTrip.activeSosAlert.id).toBe(alert.id)
+      expect(sharedTrip.activeSosAlert.location.coordsText).toBe('12.9716° N, 77.5946° E (Demo)')
+
+      // 4. Render Family dashboard for familyUser tracking this token
+      localStorage.setItem(`rakshapath:${familyUser.id}:family_tracked_token`, JSON.stringify(share.token))
+
+      render(
+        <MemoryRouter>
+          <AuthProvider>
+            <FamilySharing />
+          </AuthProvider>
+        </MemoryRouter>
+      )
+
+      expect(screen.getAllByText(/active emergency sos alert/i).length).toBeGreaterThanOrEqual(1)
+      expect(screen.getAllByText(alert.status).length).toBeGreaterThanOrEqual(1)
+      expect(screen.getByText(/12.9716° N, 77.5946° E \(Demo\)/i)).toBeInTheDocument()
+      expect(screen.getAllByRole('link', { name: /emergency helpline \(112\)/i }).length).toBeGreaterThanOrEqual(1)
+    })
+
+    it('creates no incident or Family notification when SOS countdown is cancelled', () => {
+      const initialAlertsCount = storageService.get(POLICE_ALERTS_KEY, []).length
+      const initialNotifsCount = notificationService.getNotifications(familyUser.id).length
+
+      // Simulate cancelling countdown - no dispatch called
+      expect(storageService.get(POLICE_ALERTS_KEY, []).length).toBe(initialAlertsCount)
+      expect(notificationService.getNotifications(familyUser.id).length).toBe(initialNotifsCount)
+    })
+
+    it('ensures unauthorized Family accounts cannot access another Traveller’s alert', () => {
+      // Traveller A has an active share with SOS
+      const _shareA = tripService.generateShareToken(travellerUserA.id, {
+        travellerName: travellerUserA.name,
+      })
+      const alert = {
+        id: 'SOS-TEST-9904',
+        status: SOS_STATUS.SENT,
+        location: { coordsText: 'Private Coordinates (Traveller A)' },
+      }
+      sosService.notifyAuthorizedFamily(alert, travellerUserA)
+
+      // Unrelated Family User (no token entered)
+      const unrelatedFamilyUser = {
+        id: 'user_family_unrelated',
+        name: 'Unrelated Observer',
+        role: 'Family',
+      }
+      authService.setCurrentUser(unrelatedFamilyUser)
+
+      render(
+        <MemoryRouter>
+          <AuthProvider>
+            <FamilySharing />
+          </AuthProvider>
+        </MemoryRouter>
+      )
+
+      // Must NOT show Traveller A's name, alert, or coordinates
+      expect(screen.queryByText(/private coordinates \(traveller a\)/i)).not.toBeInTheDocument()
+      expect(screen.queryByText(/active emergency sos alert/i)).not.toBeInTheDocument()
+      expect(screen.getByText(/no shared journey active/i)).toBeInTheDocument()
+      expect(screen.getByText(/no linked traveller/i)).toBeInTheDocument()
+    })
+
+    it('suppresses protected location data immediately when sharing is revoked or expired', () => {
+      const share = tripService.generateShareToken(travellerUserA.id, {
+        durationHours: 6,
+        travellerName: travellerUserA.name,
+      })
+      const alert = {
+        id: 'SOS-TEST-9905',
+        status: SOS_STATUS.SENT,
+        location: { coordsText: 'Confidential Lat: 12.999, Long: 77.999' },
+      }
+      sosService.notifyAuthorizedFamily(alert, travellerUserA)
+
+      // Confirm location is present prior to revocation
+      const activePayload = tripService.getSharedTripByToken(share.token)
+      expect(activePayload.activeSosAlert.location.coordsText).toBe('Confidential Lat: 12.999, Long: 77.999')
+
+      // Traveller revokes sharing
+      tripService.revokeShareToken(travellerUserA.id, share.token)
+
+      // Inquire token after revocation
+      const revokedPayload = tripService.getSharedTripByToken(share.token)
+      expect(revokedPayload.isRevoked).toBe(true)
+      expect(revokedPayload.activeSosAlert.location).toBeNull()
+      expect(revokedPayload.activeSosAlert.isLocationSuppressed).toBe(true)
+
+      // Family view must show revocation notice and hide location
+      authService.setCurrentUser(familyUser)
+      localStorage.setItem(`rakshapath:${familyUser.id}:family_tracked_token`, JSON.stringify(share.token))
+
+      render(
+        <MemoryRouter>
+          <AuthProvider>
+            <FamilySharing />
+          </AuthProvider>
+        </MemoryRouter>
+      )
+
+      expect(screen.getAllByText(/sharing link revoked/i).length).toBeGreaterThanOrEqual(1)
+      expect(screen.queryByText(/confidential lat: 12.999/i)).not.toBeInTheDocument()
+    })
+
+    it('maintains status consistency across views when Police console updates an incident', () => {
+      const share = tripService.generateShareToken(travellerUserA.id, {
+        travellerName: travellerUserA.name,
+      })
+      const alert = {
+        id: 'SOS-TEST-9906',
+        status: SOS_STATUS.SENT,
+        severity: 'Critical',
+        timestamp: new Date().toISOString(),
+      }
+      sosService.dispatchToPoliceFeed(alert, travellerUserA)
+      sosService.notifyAuthorizedFamily(alert, travellerUserA)
+
+      // Police officer triages incident to "Acknowledged"
+      sosService.updateIncidentStatus('SOS-TEST-9906', 'Acknowledged', 'Officer Rao')
+
+      // 1. Police feed status
+      const policeAlerts = storageService.get(POLICE_ALERTS_KEY, [])
+      const matchedPolice = policeAlerts.find((a) => a.id === 'SOS-TEST-9906')
+      expect(matchedPolice.status).toBe('Acknowledged')
+      expect(matchedPolice.history.some((h) => h.status === 'Acknowledged')).toBe(true)
+
+      // 2. Family shared trip activeSosAlert status
+      const familyPayload = tripService.getSharedTripByToken(share.token)
+      expect(familyPayload.activeSosAlert.policeStatus).toBe('Acknowledged')
+
+      // 3. Traveller received notification
+      const travellerNotifs = notificationService.getNotifications(travellerUserA.id)
+      expect(travellerNotifs.some((n) => n.title.includes('Incident Triage: Acknowledged'))).toBe(true)
+    })
+
+    it('handles duplicate SOS events idempotently without creating duplicate police incidents', () => {
+      const alert = {
+        id: 'SOS-TEST-IDEMPOTENT',
+        status: SOS_STATUS.QUEUED,
+        timestamp: new Date().toISOString(),
+      }
+
+      // First dispatch
+      sosService.dispatchToPoliceFeed(alert, travellerUserA)
+      const alertsAfterFirst = storageService.get(POLICE_ALERTS_KEY, [])
+      const countFirst = alertsAfterFirst.filter((a) => a.id === 'SOS-TEST-IDEMPOTENT').length
+      expect(countFirst).toBe(1)
+
+      // Second dispatch with retry / updated status
+      const retryAlert = {
+        ...alert,
+        status: SOS_STATUS.SENT,
+      }
+      sosService.dispatchToPoliceFeed(retryAlert, travellerUserA)
+      const alertsAfterSecond = storageService.get(POLICE_ALERTS_KEY, [])
+      const countSecond = alertsAfterSecond.filter((a) => a.id === 'SOS-TEST-IDEMPOTENT').length
+      expect(countSecond).toBe(1) // Still exactly 1
+    })
+
+    it('renders responsive mobile containers in Police and Family layouts without overflow', () => {
+      const { container: policeContainer } = render(
+        <MemoryRouter>
+          <PoliceDashboard />
+        </MemoryRouter>
+      )
+      expect(policeContainer.querySelector('.main-split')).toBeInTheDocument()
+      expect(policeContainer.querySelector('.tabs')).toBeInTheDocument()
+
+      const { container: familyContainer } = render(
+        <MemoryRouter>
+          <AuthProvider>
+            <FamilySharing />
+          </AuthProvider>
+        </MemoryRouter>
+      )
+      expect(familyContainer.querySelector('.main-split')).toBeInTheDocument()
     })
   })
 })

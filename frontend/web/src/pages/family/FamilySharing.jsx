@@ -4,7 +4,9 @@ import {
   Copy,
   HeartHandshake,
   Link as LinkIcon,
+  Phone,
   Plus,
+  ShieldAlert,
   ShieldCheck,
   Trash2,
   Users,
@@ -15,6 +17,7 @@ import useUserStorage from '../../hooks/useUserStorage'
 import { useContacts } from '../../hooks/useContacts'
 import PageHeader from '../../components/PageHeader'
 import tripService from '../../services/tripService'
+import storageService from '../../services/storageService'
 
 function FamilySharing() {
   const { user } = useAuth()
@@ -42,22 +45,23 @@ function FamilySharing() {
     privacyMode: true,
   })
   const [selectedDuration, setSelectedDuration] = useState(6)
-  const [inputToken, setInputToken] = useState('')
+  const [trackedToken, setTrackedToken] = useUserStorage('family_tracked_token', '')
+  const [inputToken, setInputToken] = useState(() => (isFamilyRole ? trackedToken : ''))
   const [copied, setCopied] = useState(false)
   const [activeSharedPayload, setActiveSharedPayload] = useState(() => {
     const tokenToLoad = isFamilyRole
-      ? null
+      ? (trackedToken || (user?.id ? storageService.get(`rakshapath:${user.id}:family_tracked_token`, '') : ''))
       : shareConfig.activeToken
     return tokenToLoad ? tripService.getSharedTripByToken(tokenToLoad) : null
   })
 
   const sharingEnabled = Boolean(preferences.locationSharing || shareConfig.isSharing)
 
-  // Load and refresh shared telemetry
+  // Load and refresh shared telemetry in real time
   useEffect(() => {
     const handleUpdate = () => {
       const currentToken = isFamilyRole
-        ? inputToken || null
+        ? trackedToken || inputToken || null
         : shareConfig.activeToken
       if (currentToken) {
         setActiveSharedPayload(tripService.getSharedTripByToken(currentToken))
@@ -67,13 +71,26 @@ function FamilySharing() {
     }
 
     window.addEventListener('rakshapath:family_share_updated', handleUpdate)
+    window.addEventListener('rakshapath:family_alert_updated', handleUpdate)
     window.addEventListener('rakshapath:trip_updated', handleUpdate)
+    window.addEventListener('storage', handleUpdate)
 
     return () => {
       window.removeEventListener('rakshapath:family_share_updated', handleUpdate)
+      window.removeEventListener('rakshapath:family_alert_updated', handleUpdate)
       window.removeEventListener('rakshapath:trip_updated', handleUpdate)
+      window.removeEventListener('storage', handleUpdate)
     }
-  }, [shareConfig.activeToken, inputToken, isFamilyRole])
+  }, [shareConfig.activeToken, inputToken, trackedToken, isFamilyRole])
+
+  const handleTrackToken = (tokenToTrack = inputToken) => {
+    const trimmed = (tokenToTrack || '').trim()
+    if (!trimmed) return
+    setTrackedToken(trimmed)
+    tripService.registerFamilySubscriber(trimmed, user?.id)
+    const payload = tripService.getSharedTripByToken(trimmed)
+    setActiveSharedPayload(payload)
+  }
 
   const handleGenerateShareToken = () => {
     setError('')
@@ -200,26 +217,106 @@ function FamilySharing() {
             </div>
 
             {/* Token entry if none loaded */}
-            <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
               <input
                 className="input"
                 placeholder="Enter demo share token (e.g. SHR-...)"
                 value={inputToken}
                 onChange={(e) => setInputToken(e.target.value.trim())}
-                style={{ fontSize: 12 }}
+                style={{ flex: '1 1 200px', minWidth: 0, fontSize: 12 }}
+                aria-label="Share token input"
               />
               <button
                 type="button"
                 className="btn btn-quiet"
-                onClick={() => {
-                  if (inputToken) {
-                    setActiveSharedPayload(tripService.getSharedTripByToken(inputToken))
-                  }
-                }}
+                style={{ minHeight: 44, padding: '0 16px' }}
+                onClick={() => handleTrackToken(inputToken)}
               >
                 Track
               </button>
             </div>
+
+            {/* High-Priority Emergency Alert Banner on Family Dashboard */}
+            {activeSharedPayload?.activeSosAlert && !activeSharedPayload.isRevoked && !activeSharedPayload.isExpired && (
+              <div
+                className="panel"
+                role="alert"
+                aria-live="assertive"
+                style={{
+                  padding: '16px',
+                  marginBottom: 16,
+                  borderRadius: 12,
+                  background: 'linear-gradient(135deg, rgba(255, 107, 107, 0.14) 0%, rgba(217, 37, 37, 0.05) 100%)',
+                  border: '1px solid var(--coral)',
+                  boxShadow: '0 4px 20px rgba(255, 107, 107, 0.15)',
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(255, 107, 107, 0.2)', color: 'var(--coral)', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
+                      <ShieldAlert size={20} />
+                    </div>
+                    <div>
+                      <strong style={{ display: 'block', fontSize: 14, color: 'var(--coral)', letterSpacing: '0.02em' }}>
+                        ACTIVE EMERGENCY SOS ALERT
+                      </strong>
+                      <span className="muted" style={{ fontSize: 11 }}>
+                        Dispatched by {activeSharedPayload.travellerName} · Demo Mode
+                      </span>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                    <span
+                      className={`pill ${activeSharedPayload.activeSosAlert.status === 'Queued' ? 'pill-amber' : 'pill-coral'}`}
+                      style={{ fontSize: 10, fontWeight: 700 }}
+                    >
+                      {activeSharedPayload.activeSosAlert.status}
+                    </span>
+                    {activeSharedPayload.activeSosAlert.policeStatus && (
+                      <span className="pill pill-lime" style={{ fontSize: 10 }}>
+                        Police: {activeSharedPayload.activeSosAlert.policeStatus}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gap: 10, fontSize: 12 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 6, padding: '8px 12px', background: 'rgba(0,0,0,0.25)', borderRadius: 8 }}>
+                    <div>
+                      <span className="muted" style={{ fontSize: 10, display: 'block' }}>ALERT TYPE</span>
+                      <strong>{activeSharedPayload.activeSosAlert.alertType || 'Emergency SOS'}</strong>
+                    </div>
+                    <div>
+                      <span className="muted" style={{ fontSize: 10, display: 'block' }}>TRIGGERED AT</span>
+                      <span>{activeSharedPayload.activeSosAlert.displayTime || new Date(activeSharedPayload.activeSosAlert.timestamp).toLocaleTimeString()}</span>
+                    </div>
+                    <div>
+                      <span className="muted" style={{ fontSize: 10, display: 'block' }}>CONNECTION</span>
+                      <span>{activeSharedPayload.activeSosAlert.isOffline ? 'Offline (Queued)' : 'Online broadcast (simulated)'}</span>
+                    </div>
+                  </div>
+
+                  {activeSharedPayload.activeSosAlert.location?.coordsText && (
+                    <div style={{ padding: '8px 12px', background: 'rgba(0,0,0,0.25)', borderRadius: 8 }}>
+                      <span className="muted" style={{ fontSize: 10, display: 'block' }}>REPORTED LOCATION</span>
+                      <strong style={{ color: '#ffffff', wordBreak: 'break-word' }}>
+                        {activeSharedPayload.activeSosAlert.location.coordsText}
+                      </strong>
+                    </div>
+                  )}
+
+                  <div style={{ display: 'flex', gap: 10, marginTop: 4, flexWrap: 'wrap' }}>
+                    <a
+                      href="tel:112"
+                      className="btn btn-danger"
+                      style={{ flex: '1 1 180px', minHeight: 44, textDecoration: 'none' }}
+                    >
+                      <Phone size={14} style={{ marginRight: 6 }} /> Emergency Helpline (112)
+                    </a>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {!activeSharedPayload || activeSharedPayload.notFound ? (
               <div className="empty-state">
@@ -239,7 +336,7 @@ function FamilySharing() {
                     Sharing Link {activeSharedPayload.isRevoked ? 'Revoked' : 'Expired'}
                   </strong>
                   <span style={{ fontSize: 11 }}>
-                    Sharing link is expired or has been revoked by the traveller. No active journey telemetry is available.
+                    Sharing link is expired or has been revoked by the traveller. No active journey telemetry or emergency data is available.
                   </span>
                 </div>
               </div>
@@ -321,7 +418,7 @@ function FamilySharing() {
                     </div>
                   </div>
 
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, marginTop: 4, color: 'var(--muted)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 6, fontSize: 11, marginTop: 4, color: 'var(--muted)' }}>
                     <span>Remaining: {activeSharedPayload.remainingKm} km · {activeSharedPayload.remainingMins} mins</span>
                     <span>Last updated: {new Intl.DateTimeFormat(undefined, { hour: 'numeric', minute: 'numeric', second: 'numeric' }).format(new Date(activeSharedPayload.lastUpdated))}</span>
                   </div>
@@ -334,7 +431,74 @@ function FamilySharing() {
             )}
           </article>
 
-          <div className="grid" style={{ alignContent: 'start' }}>
+          <div className="grid" style={{ alignContent: 'start', gap: 14 }}>
+            {/* Dedicated Emergency Alert Status Panel in Right Column */}
+            <article className="panel panel-pad">
+              <div className="panel-head">
+                <div>
+                  <h2 style={{ fontSize: 15 }}>Emergency Alert Center</h2>
+                  <p>Real-time distress monitoring for linked traveller.</p>
+                </div>
+                {activeSharedPayload?.activeSosAlert && !activeSharedPayload.isRevoked && !activeSharedPayload.isExpired ? (
+                  <ShieldAlert size={19} color="var(--coral)" />
+                ) : (
+                  <ShieldCheck size={19} color="var(--mint)" />
+                )}
+              </div>
+
+              {!activeSharedPayload || activeSharedPayload.notFound ? (
+                <div className="empty-state" style={{ padding: '24px 12px' }}>
+                  <ShieldCheck size={26} color="var(--muted)" />
+                  <strong>No Linked Traveller</strong>
+                  <span className="muted" style={{ fontSize: 11 }}>
+                    Enter a valid share token from your traveller to monitor emergency distress status.
+                  </span>
+                </div>
+              ) : activeSharedPayload.isRevoked || activeSharedPayload.isExpired ? (
+                <div
+                  className="notice"
+                  role="alert"
+                  style={{ borderColor: 'var(--coral)', background: 'rgba(255, 107, 107, 0.08)' }}
+                >
+                  <XCircle size={16} color="var(--coral)" />
+                  <div>
+                    <strong style={{ display: 'block', fontSize: 12, color: 'var(--coral)' }}>
+                      Telemetry Suppressed
+                    </strong>
+                    <span style={{ fontSize: 11 }}>
+                      The traveller has revoked sharing or the token has expired. All location and emergency telemetry are strictly suppressed.
+                    </span>
+                  </div>
+                </div>
+              ) : activeSharedPayload.activeSosAlert ? (
+                <div style={{ display: 'grid', gap: 10 }}>
+                  <div style={{ padding: '10px 12px', borderRadius: 8, background: 'rgba(255, 107, 107, 0.08)', border: '1px solid var(--coral)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                      <span className="pill pill-coral" style={{ fontSize: 9 }}>DISTRESS ACTIVE</span>
+                      <span className="muted" style={{ fontSize: 10 }}>{activeSharedPayload.activeSosAlert.status}</span>
+                    </div>
+                    <strong style={{ color: 'var(--coral)', fontSize: 13, display: 'block' }}>
+                      {activeSharedPayload.travellerName} has requested emergency assistance.
+                    </strong>
+                    <span className="muted" style={{ fontSize: 11, display: 'block', marginTop: 4 }}>
+                      Time: {activeSharedPayload.activeSosAlert.displayTime || new Date(activeSharedPayload.activeSosAlert.timestamp).toLocaleTimeString()}
+                    </span>
+                  </div>
+                  <a href="tel:112" className="btn btn-danger" style={{ minHeight: 44, textDecoration: 'none' }}>
+                    <Phone size={14} style={{ marginRight: 6 }} /> Call Emergency Helpline (112)
+                  </a>
+                </div>
+              ) : (
+                <div className="empty-state" style={{ padding: '24px 12px' }}>
+                  <ShieldCheck size={26} color="var(--mint)" />
+                  <strong style={{ color: 'var(--mint)' }}>No Active Emergency Alerts</strong>
+                  <span className="muted" style={{ fontSize: 11 }}>
+                    {activeSharedPayload.travellerName} is travelling safely. Any confirmed SOS or distress alert will immediately appear here.
+                  </span>
+                </div>
+              )}
+            </article>
+
             <article className="panel panel-pad">
               <div className="panel-head">
                 <div>

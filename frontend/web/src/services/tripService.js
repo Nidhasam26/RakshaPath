@@ -37,6 +37,8 @@ export function getUserFamilyShareConfigKey(userId) {
 }
 
 export const tripService = {
+  getSharedRegistry,
+
   /**
    * Retrieves active ongoing trip for a user.
    */
@@ -422,10 +424,119 @@ export const tripService = {
         isRevoked: record.isRevoked || false,
         isExpired,
         status: record.isRevoked ? 'Revoked' : 'Expired',
+        // Privacy safeguard: immediately suppress protected location and telemetry if revoked or expired
+        activeSosAlert: record.activeSosAlert
+          ? {
+              id: record.activeSosAlert.id,
+              alertType: record.activeSosAlert.alertType || 'Emergency SOS',
+              severity: record.activeSosAlert.severity || 'Critical',
+              status: record.activeSosAlert.status,
+              timestamp: record.activeSosAlert.timestamp,
+              isOffline: record.activeSosAlert.isOffline,
+              location: null,
+              isLocationSuppressed: true,
+            }
+          : null,
       }
     }
 
     return record
+  },
+
+  /**
+   * Registers a family user ID as a subscriber to a share token.
+   */
+  registerFamilySubscriber(token, familyUserId) {
+    if (!token || !familyUserId) return
+    const registry = getSharedRegistry()
+    if (!registry[token]) return
+
+    const currentSubscribers = Array.isArray(registry[token].subscribers)
+      ? registry[token].subscribers
+      : []
+
+    if (!currentSubscribers.includes(familyUserId)) {
+      registry[token] = {
+        ...registry[token],
+        subscribers: [...currentSubscribers, familyUserId],
+      }
+      storageService.set(SHARED_REGISTRY_KEY, registry)
+    }
+  },
+
+  /**
+   * Attaches an active SOS distress alert to all active shared trips for a traveller.
+   */
+  attachSosAlertToSharedTrips(travellerUserId, sosAlert) {
+    if (!travellerUserId || !sosAlert) return
+    const registry = getSharedRegistry()
+    let updated = false
+
+    Object.keys(registry).forEach((tok) => {
+      const record = registry[tok]
+      if (record.travellerUserId === travellerUserId) {
+        const isExpired = new Date(record.expiresAt).getTime() < Date.now()
+        if (!record.isRevoked && !isExpired) {
+          registry[tok] = {
+            ...record,
+            activeSosAlert: {
+              id: sosAlert.id,
+              alertType: 'Emergency SOS',
+              severity: sosAlert.severity || 'Critical',
+              status: sosAlert.status || 'Sent (simulated)',
+              timestamp: sosAlert.timestamp || new Date().toISOString(),
+              displayTime: sosAlert.displayTime || new Date().toLocaleTimeString(),
+              isOffline: Boolean(sosAlert.isOffline),
+              policeStatus: sosAlert.policeStatus || 'New',
+              location: sosAlert.location
+                ? {
+                    coordsText: sosAlert.location.coordsText || (sosAlert.location.latitude ? `${sosAlert.location.latitude.toFixed(4)}° N, ${sosAlert.location.longitude.toFixed(4)}° E` : 'Coordinates shared'),
+                    latitude: sosAlert.location.latitude,
+                    longitude: sosAlert.location.longitude,
+                    accuracy: sosAlert.location.accuracy,
+                  }
+                : null,
+            },
+            lastUpdated: new Date().toISOString(),
+          }
+          updated = true
+        }
+      }
+    })
+
+    if (updated) {
+      storageService.set(SHARED_REGISTRY_KEY, registry)
+      if (typeof window !== 'undefined' && window.dispatchEvent) {
+        window.dispatchEvent(new CustomEvent('rakshapath:family_share_updated', { detail: { travellerUserId } }))
+      }
+    }
+  },
+
+  /**
+   * Clears active SOS distress alert from all shared trips for a traveller.
+   */
+  clearSosAlertFromSharedTrips(travellerUserId) {
+    if (!travellerUserId) return
+    const registry = getSharedRegistry()
+    let updated = false
+
+    Object.keys(registry).forEach((tok) => {
+      if (registry[tok].travellerUserId === travellerUserId && registry[tok].activeSosAlert) {
+        registry[tok] = {
+          ...registry[tok],
+          activeSosAlert: null,
+          lastUpdated: new Date().toISOString(),
+        }
+        updated = true
+      }
+    })
+
+    if (updated) {
+      storageService.set(SHARED_REGISTRY_KEY, registry)
+      if (typeof window !== 'undefined' && window.dispatchEvent) {
+        window.dispatchEvent(new CustomEvent('rakshapath:family_share_updated', { detail: { travellerUserId } }))
+      }
+    }
   },
 
   /**
