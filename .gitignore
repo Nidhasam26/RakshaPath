@@ -1,0 +1,89 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Environments & Dependencies
+.env
+.env.local
+.env.*.local
+venv/
+.venv/
+env/
+ENV/
+node_modules/
+.npm/
+
+# IDE and Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Database & Persistent Volumes
+postgres_data/
+redis_data/
+*.sqlite3
+*.db
+
+# Backend & Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+dist/
+build/
+*.egg-info/
+
+# Flutter / Android / Dart
+app/.dart_tool/
+app/.flutter-plugins
+app/.flutter-plugins-dependencies
+app/.packages
+app/build/
+app/android/.gradle/
+app/android/app/build/
+app/android/local.properties
+app/ios/.symlinks/
+app/ios/Pods/
+*.apk
+*.aab
+
+# Dashboard / Frontend
+dashboard/build/
+dashboard/dist/
+dashboard/.next/
+
+# ML artifacts
+ml/models/*.pkl
+ml/models/*.joblib
+ml/models/*.onnx
+ml/data/raw/*
+!ml/data/raw/.gitkeep
+
+
+# All environment files and secrets
+.env.*
+!.env.example
+
+# Logs and test coverage
+*.log
+coverage/
+
+#Local backups - do not commit
+frontend-dashboard-backup/
+
+# Flutter generated files (all project locations)
+**/.dart_tool/
+**/.flutter-plugins
+**/.flutter-plugins-dependencies
+**/.packages
+**/.gradle/
+**/local.properties
+**/.symlinks/
+**/Pods/

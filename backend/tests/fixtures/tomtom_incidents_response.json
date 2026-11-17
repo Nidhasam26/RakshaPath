@@ -1,0 +1,70 @@
+{
+  "incidents": [
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "tt-inc-1001",
+        "iconCategory": 1,
+        "magnitudeOfDelay": 3,
+        "events": [
+          {
+            "code": 101,
+            "description": "Multi-vehicle collision blocking two central lanes on Outer Ring Road flyover"
+          }
+        ],
+        "startTime": "2026-10-09T08:00:00Z",
+        "endTime": "2026-10-09T14:00:00Z",
+        "from": "Koramangala Junction",
+        "to": "Silk Board Flyover"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [77.6271, 12.9279]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "tt-inc-1002",
+        "iconCategory": 8,
+        "magnitudeOfDelay": 3,
+        "events": [
+          {
+            "code": 401,
+            "description": "Road completely closed due to severe water logging and storm water drain overflow"
+          }
+        ],
+        "startTime": "2026-10-09T07:30:00Z",
+        "endTime": "2026-10-09T18:00:00Z",
+        "from": "Wind Tunnel Road",
+        "to": "HAL Old Airport Road"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [77.6612, 12.9558]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "tt-inc-1003",
+        "iconCategory": 6,
+        "magnitudeOfDelay": 2,
+        "events": [
+          {
+            "code": 201,
+            "description": "Heavy traffic congestion with 25 min delay"
+          }
+        ],
+        "startTime": "2026-10-09T09:00:00Z",
+        "endTime": "2026-10-09T11:30:00Z",
+        "from": "Tin Factory",
+        "to": "KR Puram Bridge"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [77.6740, 12.9980]
+      }
+    }
+  ]
+}
