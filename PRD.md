@@ -5,8 +5,8 @@ Intelligent Safety Navigation & Emergency Assistance Platform
 Product Requirements Document (PRD)
 
 Document Detail| Value
-Version| 5.0
-Previous Version| 4.0
+Version| 5.3
+Previous Version| 5.2
 Project Type| Full-Stack Mini Project
 Development Approach| Incremental Product Development
 Primary Frontend| React + Vite
@@ -16,7 +16,7 @@ Future Mobile Packaging| Capacitor for Android
 Backend| Existing FastAPI backend — integration deferred
 Status| Frontend Development
 
-Tagline: Know the danger before you reach it.
+Tagline: Plan • Travel • Stay Safe
 
 ---
 
@@ -45,6 +45,17 @@ To create an accessible, intelligent and reliable safety platform that helps peo
 - Provide accessible emergency assistance features.
 - Enable private trip sharing with trusted contacts.
 - Present relevant safety information through a simple interface.
+
+1.3 Brand Identity & Visual Language
+
+RakshaPath follows a focused, dark-themed personal travel safety design system:
+- Tagline: "Plan • Travel • Stay Safe" (applied as the single official brand tagline across all interfaces).
+- Logo Usage: The application uses official transparent brand assets via the reusable `<Logo />` component. The full lockup (`logo-full.png`) is sized at 210px for authentication surfaces; the shield emblem (`logo-shield.png`) is sized at 32–34px for navigation sidebars, mobile headers, and favicons.
+- Theme & Palette: Built on a deep navy base (`--bg: #070d1f`, `--surface: #0e172e`) with a vibrant teal-mint accent (`--accent: #2de2b0`) for primary interactive controls, active navigation, and focus rings. Legacy lime greens are completely eliminated.
+- Danger Reservation: Coral red (`--danger: #ff5a4f`) is reserved strictly for SOS triggers, destructive errors, and Critical hazard alerts.
+- Accessibility: Primary interactive controls achieve an 11.61:1 contrast ratio, exceeding WCAG 2.1 AA requirements.
+
+For the exhaustive design tokens, typography scale, component sizes, and contrast specifications, see [DESIGN.md](DESIGN.md).
 
 ---
 
@@ -248,8 +259,24 @@ Functional Requirements
 - FR-08: Provide account settings.
 - FR-09: Display appropriate validation messages.
 - FR-10: Provide a logout interface.
+- FR-100: Quick Demo-Role Authentication & Role-Aware Routing (Demo Only).
+  Provide one-click demonstration authentication buttons on the sign-in interface for the three application roles: Traveller, Family member, and Police demo operator.
+  Acceptance Criteria:
+  - Demo Roles & Seeded Accounts: Defined centrally in `src/constants/demoUsers.js`. Users should use the one-click demo buttons on `/login` to sign in instantly with seeded roles:
+    * Traveller: `traveller.demo@rakshapath.local` (Name: "Priya Sharma (Demo)", default redirect to `/dashboard`).
+    * Family: `family.demo@rakshapath.local` (Name: "Rohan Sharma (Demo)", default redirect to `/family`).
+    * Police: `police.demo@rakshapath.local` (Name: "Inspector Sharma (Demo)", default redirect to `/police`).
+  - Safe Local Provisioning: Demo buttons authenticate via the client-side demo authentication mechanism without bypassing protected routes or PBKDF2 hashing. If the pre-configured seeded demo account does not exist in local storage, it is provisioned through the standard registration pathway using Web Cryptography PBKDF2 (600,000 iterations, 16-byte random salt).
+  - Deduplicated Login: If the account already exists, the button authenticates using the standard login pathway without creating duplicate accounts.
+  - Role-Aware Redirection: Upon successful authentication (manual or one-click demo), users are redirected strictly to their designated workspace:
+    * `user.role === 'Traveller'` -> `/dashboard`
+    * `user.role === 'Family'` -> `/family`
+    * `user.role === 'Police'` -> `/police`
+  - Public Route Protection (`PublicOnlyRoute`): Authenticated users attempting to navigate to `/login`, `/register`, or `/forgot-password` are automatically redirected to their role-appropriate destination.
+  - Interactive States: Interactive controls display clear loading and disabled states to prevent concurrent submissions.
+  - Demo-Only Wording: The interface clearly identifies that demo accounts are client-side demonstration conveniences operating within browser localStorage and do not represent a real backend service.
 
-Authentication will use frontend demonstration state until backend integration is authorized. A locally simulated login must not be represented as secure production authentication.
+Authentication will use frontend demonstration state until backend integration is authorized. Authentication in the current release is a client-side demo authentication, not production-grade security, featuring role-based separation (Traveller, Family, Police) in the demo. Passwords are processed locally via the Web Cryptography API using PBKDF2 with HMAC-SHA-256 at 600,000 iterations and a cryptographically random 16-byte salt per account. A locally simulated login must not be represented as secure production authentication.
 
 Module B — Smart Home Dashboard
 
@@ -282,8 +309,15 @@ Hazard Categories
 Functional Requirements
 
 - FR-20: Display hazards on the map.
+- FR-20.1: Interactive Map Legend Dock (`SafetyMap.jsx`).
+  Provide an on-map legend dock anchored at the bottom-left of the interactive map (`position: absolute; bottom: 16px; left: 16px; z-index: 1000`) with a semi-transparent surface (`var(--panel)`, `var(--surface)`) and backdrop blur (`backdrop-filter: blur(8px)`). The legend is collapsed by default (`legendOpen = false`), presenting a compact summary header with a `Layers` icon, an `Expand`/`Collapse` indicator, and a semantic toggle button (`<button type="button" aria-expanded={legendOpen} aria-controls="map-legend-content">`). When expanded, the container (`aria-hidden={!legendOpen}`, `hidden={!legendOpen}`) reveals visual symbology keys for:
+  * Live GPS position (`var(--accent)` dot, annotated with `(Live)` when active continuous tracking is engaged)
+  * Route starting point (`var(--accent)` dot)
+  * Destination pin (white center with `tokens.accent` ring)
+  * Hazard severity markers: Critical (`SEVERITY_COLORS.Critical` / `var(--danger)`), High (`SEVERITY_COLORS.High` / `var(--orange)`), Medium (`SEVERITY_COLORS.Medium` / `var(--amber)`), and Low (`SEVERITY_COLORS.Low` / `var(--info)`)
+  * Selected active route (`var(--accent)` solid polyline bar when active routes are displayed).
 - FR-21: Categorize hazards by type.
-- FR-22: Display hazard severity.
+- FR-22: Display hazard severity using standardized color and icon tokens: Critical (Coral Red `--danger`, with pulse animation), High (Orange `--orange`), Medium (Amber `--amber`), and Low (Blue `--info`), paired with textual labels and symbols (non-color-alone cues).
 - FR-23: Display hazard details.
 - FR-24: Display hazard source where available.
 - FR-25: Display reported or last-updated time.
@@ -350,13 +384,21 @@ Functional Requirements
 - FR-43: Start a trip.
 - FR-44: Display the selected route.
 - FR-45: Display journey progress.
+- FR-45.1: Continuous GPS Telemetry & Orthogonal Polyline Projection (`useGeolocation.js`, `tripService.js`).
+  Capture real device GPS telemetry via continuous position watcher (`watchPosition`) with heading, speed, and accuracy metadata, plus structured permission state tracking (`granted`, `denied`, `prompt`, `unavailable`, `timeout`). Project incoming coordinates orthogonally onto the active polyline geometry (`findNearestPointOnPolyline`) to update distance travelled, progress percentage, and remaining distance/time.
 - FR-46: Display remaining distance and estimated time.
 - FR-47: Display relevant route warnings.
+- FR-47.1: Off-Route Detection & On-Demand Route Recalculation (`useTripTracker.js`, `tripService.js`).
+  Continuously measure orthogonal distance from the user's GPS position to the nearest route segment. If the user diverges by > 60 meters across 2 consecutive GPS fixes, set `isOffRoute: true`, alert the traveller via `ActiveTripTracker`, and provide a one-click "Recalculate Route" action that computes an updated OSRM road route from current coordinates to the original destination.
 - FR-48: Provide trip pause and end controls.
+- FR-48.1: Automatic Journey Arrival Detection (`tripService.js`).
+  When the user approaches within 50 meters of the destination coordinates with reliable GPS accuracy (<= 45m) for 2 consecutive fixes, automatically complete the journey (`endTrip`), synchronizing status across local storage and shared family registries.
 - FR-49: Display trip history.
 - FR-50: Display warnings approximately 5 km before a hazard when reliable distance and location information is available.
+- FR-50.1: Proactive Route Hazard Advisories (`tripService.js`).
+  When remaining journey distance is between 1.0 km and 5.5 km, evaluate active Critical, High, or Medium severity hazards along the remaining corridor. Automatically issue an in-app route advisory notification and attach the hazard alert to the active trip state.
 
-In the demo, trip movement and progress may be simulated. The interface must not imply continuous real-world tracking when it is not active.
+In the demo, trip movement and progress may be simulated when real GPS is unavailable or during automated testing. The interface must not imply continuous real-world tracking when it is not active.
 
 Module G — Family Tracking and Trip Sharing
 
@@ -365,6 +407,7 @@ Objective: Enable private journey sharing with trusted contacts.
 Functional Requirements
 
 - FR-51: Allow users to manage trusted contacts.
+  * Empty State Action: When zero contacts are saved in the user's safety circle, the interface must render a clear, actionable empty state with an "Add contact" action button linking directly to `/contacts`.
 - FR-52: Provide a trip-sharing interface.
 - FR-53: Generate or display a demonstration sharing link.
 - FR-54: Display shared traveller location when available.
@@ -435,7 +478,7 @@ Functional Requirements
 - FR-75: Provide a police dashboard interface.
 - FR-76: Display simulated SOS reports.
 - FR-77: Display incident locations.
-- FR-78: Display incident severity.
+- FR-78: Display incident severity using standardized color and icon tokens: Critical (Coral Red `--danger`, `#ff5a4f`), High (Orange `#ff9838`), Medium (Amber `#ffc66d`), and Low (Blue `--info`, `#1fa7ff`), paired with textual labels and symbols (non-color-alone cues).
 - FR-79: Display incident status.
 - FR-80: Display incident details.
 - FR-81: Provide incident status controls for demonstration.
@@ -505,15 +548,23 @@ The application must support:
 - Mobile browsers.
 - Different screen sizes and orientations.
 
+9.3 Responsive Design & Viewport Rules
+
+The application supports responsive viewing across desktop, tablet, and mobile browsers:
+- Unified Mobile Breakpoint (≤ 820px): The desktop sidebar collapses into an off-canvas drawer while the topbar hamburger and mobile brand emblem (`.header-brand-badge`) appear simultaneously, ensuring the sidebar logo and header logo are never visible together. Simultaneously, the authentication hero panel (`.auth-visual`) auto-hides to present a focused, centered, touch-friendly login card.
+- Compact Desktop Breakpoint (≤ 1100px): In the authentication dual-pane layout, the telemetry/map card auto-hides at and below 1100px to guarantee ample headline breathing room and prevent text-illustration collision on mid-sized displays.
+- Wide Desktop Breakpoint (> 1100px): Full dual-pane showcase displays both the copy hierarchy and the illustrative route corridor card.
+- Touch Target Sizes: Primary touch targets (buttons, inputs, navigation items) maintain a minimum 44×44px hit area (with the floating SOS action at 48px).
+
 9.4 Accessibility
 
-- Appropriate color contrast.
-- Readable text.
-- Keyboard navigation.
-- Clear focus states.
-- Accessible labels for controls.
+- Appropriate color contrast (primary buttons achieve 11.61:1 contrast, exceeding WCAG 2.1 AA).
+- Readable text and accessible focus indicators (2px–3px rings in `var(--accent)`).
+- Keyboard navigation throughout all modal dialogs, routes, and dropdown menus.
+- Clear focus states and accessible labels for controls (`aria-label`, `aria-expanded`).
 - Icons accompanied by meaningful labels where necessary.
-- Important statuses not communicated by color alone.
+- Important statuses not communicated by color alone (always paired with icon symbols and text labels).
+- Motion reduction honoring `@media (prefers-reduced-motion: reduce)`.
 
 9.5 Reliability
 
@@ -798,12 +849,16 @@ The following rules govern the implementation of RakshaPath v5.0:
 
 19. Version History
 
-Version| Description
-4.0| Original RakshaPath scope combining Flutter Android application, React web dashboards and backend architecture.
-5.0| Revised frontend architecture with React + Vite as the active development approach, preserved original functional vision, introduced mock-data-first development and deferred backend integration.
+Version| Date | Description
+4.0| 2026-10-08 | Original RakshaPath scope combining Flutter Android application, React web dashboards and backend architecture.
+5.0| 2026-11-17 | Revised frontend architecture with React + Vite as the active development approach, preserved original functional vision, introduced mock-data-first development and deferred backend integration.
+5.1| 2026-11-20 | Formalized brand identity ("Plan • Travel • Stay Safe", teal/coral palette, DESIGN.md), unified responsive breakpoint at 820px, updated hazard severity color tokens (FR-22/FR-78), documented PBKDF2 (600k iterations) client-side demo auth, and archived Flutter v4.0 PRD.
+5.2| 2026-11-20 | Added FR-100 (Quick Demo-Role Authentication for Traveller, Family, and Police demo roles), aligned authentication hero auto-hide breakpoint with the unified 820px mobile breakpoint, documented 1100px telemetry card hide rule, and added card container styling specifications to the login interface.
+5.3| 2026-11-20 | Re-audited PRD against current frontend implementation. Codified FR-100 seeded demo accounts in `src/constants/demoUsers.js` with client-side demo-only safeguards, documented role-aware redirects after login (`/dashboard`, `/family`, `/police`) and PublicOnlyRoute guards. Documented collapsed-by-default map legend (SafetyMap), empty-state "Add contact" action in Family Sharing and Contacts (FR-51), and real-time GPS telemetry tracking.
+5.4| 2026-11-20 | Documentation audit fixes: purged demo passwords, relocated map legend dock to FR-20.1 with design token references and semantic button/accessibility attributes, and re-mapped trip monitoring sub-items to their precise parent FRs (FR-45.1 GPS projection, FR-47.1 off-route recalculation, FR-48.1 auto-arrival, FR-50.1 proactive hazard advisories).
 
-Document Status: RakshaPath PRD v5.0 — Updated development baseline.
+Document Status: RakshaPath PRD v5.4 — Aligned with current frontend implementation.
 
 Final Product Goal: Build a complete, responsive and functional RakshaPath frontend using React + Vite, with traveller, family and police interfaces, while preserving the original safety-focused product vision.
 
-Tagline: Know the danger before you reach it.
+Tagline: Plan • Travel • Stay Safe

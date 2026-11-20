@@ -211,7 +211,7 @@ function FamilySharing() {
                   Live demonstration telemetry from your traveller.
                 </span>
               </div>
-              <span className="pill pill-lime" style={{ fontSize: 10 }}>
+              <span className="badge-demo">
                 SIMULATED FAMILY TRACKING
               </span>
             </div>
@@ -246,18 +246,18 @@ function FamilySharing() {
                   padding: '16px',
                   marginBottom: 16,
                   borderRadius: 12,
-                  background: 'linear-gradient(135deg, rgba(255, 107, 107, 0.14) 0%, rgba(217, 37, 37, 0.05) 100%)',
-                  border: '1px solid var(--coral)',
-                  boxShadow: '0 4px 20px rgba(255, 107, 107, 0.15)',
+                  background: 'linear-gradient(135deg, rgba(255, 90, 79, 0.14) 0%, rgba(217, 37, 37, 0.05) 100%)',
+                  border: '1px solid var(--danger)',
+                  boxShadow: '0 4px 20px rgba(255, 90, 79, 0.15)',
                 }}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(255, 107, 107, 0.2)', color: 'var(--coral)', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
+                    <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(255, 90, 79, 0.2)', color: 'var(--danger)', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
                       <ShieldAlert size={20} />
                     </div>
                     <div>
-                      <strong style={{ display: 'block', fontSize: 14, color: 'var(--coral)', letterSpacing: '0.02em' }}>
+                      <strong style={{ display: 'block', fontSize: 14, color: 'var(--danger)', letterSpacing: '0.02em' }}>
                         ACTIVE EMERGENCY SOS ALERT
                       </strong>
                       <span className="muted" style={{ fontSize: 11 }}>
@@ -273,7 +273,7 @@ function FamilySharing() {
                       {activeSharedPayload.activeSosAlert.status}
                     </span>
                     {activeSharedPayload.activeSosAlert.policeStatus && (
-                      <span className="pill pill-lime" style={{ fontSize: 10 }}>
+                      <span className="pill pill-accent" style={{ fontSize: 10 }}>
                         Police: {activeSharedPayload.activeSosAlert.policeStatus}
                       </span>
                     )}
@@ -299,7 +299,7 @@ function FamilySharing() {
                   {activeSharedPayload.activeSosAlert.location?.coordsText && (
                     <div style={{ padding: '8px 12px', background: 'rgba(0,0,0,0.25)', borderRadius: 8 }}>
                       <span className="muted" style={{ fontSize: 10, display: 'block' }}>REPORTED LOCATION</span>
-                      <strong style={{ color: '#ffffff', wordBreak: 'break-word' }}>
+                      <strong style={{ color: 'var(--text)', wordBreak: 'break-word' }}>
                         {activeSharedPayload.activeSosAlert.location.coordsText}
                       </strong>
                     </div>
@@ -328,11 +328,11 @@ function FamilySharing() {
               <div
                 className="notice"
                 role="alert"
-                style={{ borderColor: 'var(--coral)', background: 'rgba(255, 107, 107, 0.08)' }}
+                style={{ borderColor: 'var(--danger)', background: 'rgba(255, 90, 79, 0.08)' }}
               >
-                <XCircle size={16} color="var(--coral)" />
+                <XCircle size={16} color="var(--danger)" />
                 <div>
-                  <strong style={{ display: 'block', fontSize: 12, color: 'var(--coral)' }}>
+                  <strong style={{ display: 'block', fontSize: 12, color: 'var(--danger)' }}>
                     Sharing Link {activeSharedPayload.isRevoked ? 'Revoked' : 'Expired'}
                   </strong>
                   <span style={{ fontSize: 11 }}>
@@ -348,7 +348,7 @@ function FamilySharing() {
                     className="notice"
                     role="status"
                     style={{
-                      borderColor: 'var(--amber, #ffc66d)',
+                      borderColor: 'var(--amber)',
                       background: 'rgba(255, 198, 109, 0.08)',
                     }}
                   >
@@ -379,10 +379,10 @@ function FamilySharing() {
                       <span className="muted" style={{ fontSize: 10 }}>TRAVELLER</span>
                       <strong style={{ display: 'block', fontSize: 15 }}>{activeSharedPayload.travellerName}</strong>
                     </div>
-                    <span className="pill pill-mint">{activeSharedPayload.status}</span>
+                    <span className="pill pill-accent">{activeSharedPayload.status}</span>
                   </div>
 
-                  <div style={{ fontSize: 13, color: '#ffffff', fontWeight: 600 }}>
+                  <div style={{ fontSize: 13, color: 'var(--text)', fontWeight: 600 }}>
                     {activeSharedPayload.start} → {activeSharedPayload.end}
                   </div>
                   <span className="muted" style={{ fontSize: 11 }}>
@@ -393,7 +393,7 @@ function FamilySharing() {
                   <div style={{ marginTop: 6 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, marginBottom: 4 }}>
                       <span className="muted">Simulated Progress</span>
-                      <strong style={{ color: 'var(--mint)' }}>{activeSharedPayload.progress}%</strong>
+                      <strong style={{ color: 'var(--accent)' }}>{activeSharedPayload.progress}%</strong>
                     </div>
                     <div
                       role="progressbar"
@@ -412,7 +412,7 @@ function FamilySharing() {
                         style={{
                           height: '100%',
                           width: `${activeSharedPayload.progress}%`,
-                          background: 'linear-gradient(90deg, #64e2ba 0%, #c6f36a 100%)',
+                          background: 'linear-gradient(90deg, var(--accent) 0%, var(--accent-2) 100%)',
                         }}
                       />
                     </div>
@@ -442,7 +442,7 @@ function FamilySharing() {
                 {activeSharedPayload?.activeSosAlert && !activeSharedPayload.isRevoked && !activeSharedPayload.isExpired ? (
                   <ShieldAlert size={19} color="var(--coral)" />
                 ) : (
-                  <ShieldCheck size={19} color="var(--mint)" />
+                  <ShieldCheck size={19} color="var(--accent)" />
                 )}
               </div>
 
@@ -490,8 +490,8 @@ function FamilySharing() {
                 </div>
               ) : (
                 <div className="empty-state" style={{ padding: '24px 12px' }}>
-                  <ShieldCheck size={26} color="var(--mint)" />
-                  <strong style={{ color: 'var(--mint)' }}>No Active Emergency Alerts</strong>
+                  <ShieldCheck size={26} color="var(--accent)" />
+                  <strong style={{ color: 'var(--accent)' }}>No Active Emergency Alerts</strong>
                   <span className="muted" style={{ fontSize: 11 }}>
                     {activeSharedPayload.travellerName} is travelling safely. Any confirmed SOS or distress alert will immediately appear here.
                   </span>
@@ -505,7 +505,7 @@ function FamilySharing() {
                   <h2>Privacy & Safety Notice</h2>
                   <p>Family members see only explicitly shared journey telemetry.</p>
                 </div>
-                <ShieldCheck size={19} color="var(--mint)" />
+                <ShieldCheck size={19} color="var(--accent)" />
               </div>
               <p className="muted" style={{ fontSize: 12, lineHeight: 1.5, margin: 0 }}>
                 This is a privacy-first demonstration. Passwords, emergency contact numbers, login credentials, and unrelated private trips are never exposed to family viewers.
@@ -531,6 +531,9 @@ function FamilySharing() {
                 <HeartHandshake size={23} />
                 <strong>Your circle is ready to grow</strong>
                 <span>Add someone you’d like to include.</span>
+                <a href="/contacts" className="btn btn-secondary" style={{ marginTop: 10, fontSize: 12 }}>
+                  Add contact
+                </a>
               </div>
             ) : (
               <div>
@@ -568,7 +571,7 @@ function FamilySharing() {
                   <h2>Journey Sharing Link</h2>
                   <p>Generate a controlled demonstration link.</p>
                 </div>
-                <span className="pill pill-lime" style={{ fontSize: 9 }}>DEMO SHARE LINK</span>
+                <span className="badge-demo">DEMO SHARE LINK</span>
               </div>
 
               {shareConfig.isSharing && shareConfig.activeToken ? (
@@ -583,10 +586,10 @@ function FamilySharing() {
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
                       <span className="muted" style={{ fontSize: 10 }}>ACTIVE SHARE TOKEN</span>
-                      <span className="pill pill-mint" style={{ fontSize: 9 }}>ACTIVE</span>
+                      <span className="pill pill-accent" style={{ fontSize: 9 }}>ACTIVE</span>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
-                      <code style={{ fontSize: 13, fontWeight: 700, color: 'var(--mint)' }}>
+                      <code style={{ fontSize: 13, fontWeight: 700, color: 'var(--accent)' }}>
                         {shareConfig.activeToken}
                       </code>
                       <button
@@ -652,7 +655,7 @@ function FamilySharing() {
 
                   <button
                     type="button"
-                    className="btn btn-primary"
+                    className="btn btn-secondary"
                     onClick={handleGenerateShareToken}
                     style={{ fontSize: 12, minHeight: 36, marginTop: 4 }}
                   >
@@ -678,7 +681,7 @@ function FamilySharing() {
                   <h2>Location sharing preference</h2>
                   <p>Opt-in toggle saved for this user profile.</p>
                 </div>
-                <ShieldCheck size={19} color="var(--lime)" />
+                <ShieldCheck size={19} color="var(--accent)" />
               </div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 14 }}>
                 <div>

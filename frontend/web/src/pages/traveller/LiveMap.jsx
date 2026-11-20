@@ -1,8 +1,9 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   AlertTriangle,
   CheckCircle2,
   Filter,
+  Navigation,
   Plus,
   RefreshCw,
   Route,
@@ -17,11 +18,28 @@ import RoutePlanner from '../../components/navigation/RoutePlanner'
 import { useAuth } from '../../context/useAuth'
 import { useGeolocation } from '../../hooks/useGeolocation'
 import { hazardService } from '../../services/hazardService'
+import { routeService } from '../../services/routeService'
 import { HAZARD_CATEGORIES, SEVERITY_COLORS, HAZARD_STATUS } from '../../data/hazardData'
 
 export function LiveMap() {
   const { user } = useAuth()
-  const { location: geoLoc } = useGeolocation()
+  const {
+    location: geoLoc,
+    isTracking,
+    startWatching,
+    stopWatching,
+    requestLocation,
+    permissionDenied,
+  } = useGeolocation()
+
+  // Automatically request a single real device location fix on mount
+  const hasRequestedLocationRef = useRef(false)
+  useEffect(() => {
+    if (!hasRequestedLocationRef.current) {
+      hasRequestedLocationRef.current = true
+      requestLocation().catch(() => { })
+    }
+  }, [requestLocation])
 
   // Role permissions
   const isFamily = user?.role === 'Family'
@@ -33,9 +51,30 @@ export function LiveMap() {
   const [selectedHazard, setSelectedHazard] = useState(null)
   const [showReportModal, setShowReportModal] = useState(false)
 
-  // Route state
-  const [activeRoutes, setActiveRoutes] = useState([])
-  const [selectedRoute, setSelectedRoute] = useState(null)
+  // Route state (initialized with demo corridors for immediate map display)
+  const [activeRoutes, setActiveRoutes] = useState(() => {
+    try {
+      return routeService.generateRouteAlternatives(
+        'Koramangala Sony World',
+        'Indiranagar 100ft Road',
+        hazardService.getAllHazards(user?.id)
+      )
+    } catch {
+      return []
+    }
+  })
+  const [selectedRoute, setSelectedRoute] = useState(() => {
+    try {
+      const init = routeService.generateRouteAlternatives(
+        'Koramangala Sony World',
+        'Indiranagar 100ft Road',
+        hazardService.getAllHazards(user?.id)
+      )
+      return init[0] || null
+    } catch {
+      return null
+    }
+  })
 
   // View mode tab: 'routes' | 'hazards'
   const [viewMode, setViewMode] = useState('routes')
@@ -103,23 +142,62 @@ export function LiveMap() {
         title="Safety map"
         description="A clear view of sample locations, reported hazards, and route safety intelligence."
         action={
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+            <button
+              type="button"
+              className={`btn ${isTracking ? 'btn-primary' : 'btn-quiet'}`}
+              onClick={isTracking ? stopWatching : startWatching}
+              style={{ fontSize: 12, minHeight: 36 }}
+            >
+              <Navigation size={14} /> {isTracking ? 'Stop Live GPS' : 'Track My Location'}
+            </button>
             {canReportHazard && (
               <button
                 type="button"
-                className="btn btn-primary"
+                className="btn btn-secondary"
                 onClick={() => setShowReportModal(true)}
                 style={{ fontSize: 12, minHeight: 36 }}
               >
                 <Plus size={14} /> Report Hazard (Demo)
               </button>
             )}
-            <span className={`pill ${isFamily ? 'pill-quiet' : 'pill-lime'}`}>
-              {isFamily ? 'READ-ONLY (FAMILY)' : 'DEMO ENVIRONMENT'}
-            </span>
+            {geoLoc?.isRealGps ? (
+              <span className="pill pill-accent" style={{ fontSize: 10 }}>
+                LIVE GPS (±{geoLoc.accuracy}m)
+              </span>
+            ) : permissionDenied ? (
+              <span className="pill pill-coral" style={{ fontSize: 10 }}>
+                GPS DENIED (DEMO FALLBACK)
+              </span>
+            ) : (
+              <span className={`pill ${isFamily ? 'pill-quiet' : 'pill-accent'}`} style={{ fontSize: 10 }}>
+                {isFamily ? 'READ-ONLY (FAMILY)' : 'DEMO ENVIRONMENT'}
+              </span>
+            )}
           </div>
         }
       />
+
+      {/* Permission Denied Notice */}
+      {permissionDenied && (
+        <div
+          className="notice"
+          role="status"
+          style={{
+            marginBottom: 16,
+            borderColor: 'var(--amber)',
+            color: 'var(--amber)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+          }}
+        >
+          <AlertTriangle size={15} />
+          <span>
+            Location access was not granted. Displaying demo environment in Bengaluru. You can enable location in your browser at any time to see your real position.
+          </span>
+        </div>
+      )}
 
       {/* Overview Metric Cards */}
       <section className="grid three" style={{ marginBottom: 16 }}>
@@ -137,7 +215,7 @@ export function LiveMap() {
         <article className="panel stat-card">
           <div className="stat-top">
             <span>High & Critical Risks</span>
-            <span className="stat-icon" style={{ color: 'var(--coral, #ff6b6b)' }}>
+            <span className="stat-icon" style={{ color: 'var(--danger)' }}>
               <ShieldAlert size={17} />
             </span>
           </div>
@@ -148,7 +226,7 @@ export function LiveMap() {
         <article className="panel stat-card">
           <div className="stat-top">
             <span>{isFamily ? 'Account Mode' : 'Your Demo Reports'}</span>
-            <span className="stat-icon" style={{ color: 'var(--mint, #64e2ba)' }}>
+            <span className="stat-icon" style={{ color: 'var(--accent, #2de2b0)' }}>
               <ShieldCheck size={17} />
             </span>
           </div>
@@ -174,7 +252,7 @@ export function LiveMap() {
           type="button"
           role="tab"
           aria-selected={viewMode === 'routes'}
-          className={`btn ${viewMode === 'routes' ? 'btn-primary' : 'btn-quiet'}`}
+          className={`btn ${viewMode === 'routes' ? 'btn-secondary' : 'btn-quiet'}`}
           onClick={() => setViewMode('routes')}
           style={{ minHeight: 40 }}
         >
@@ -184,7 +262,7 @@ export function LiveMap() {
           type="button"
           role="tab"
           aria-selected={viewMode === 'hazards'}
-          className={`btn ${viewMode === 'hazards' ? 'btn-primary' : 'btn-quiet'}`}
+          className={`btn ${viewMode === 'hazards' ? 'btn-secondary' : 'btn-quiet'}`}
           onClick={() => setViewMode('hazards')}
           style={{ minHeight: 40 }}
         >
@@ -203,7 +281,7 @@ export function LiveMap() {
                 <p>Choose a marker for more context. Map pins are not live reports.</p>
               </div>
               {selectedRoute && (
-                <span className="pill pill-mint" style={{ fontSize: 10 }}>
+                <span className="pill pill-accent" style={{ fontSize: 10 }}>
                   Active: {selectedRoute.name}
                 </span>
               )}
@@ -217,6 +295,7 @@ export function LiveMap() {
               selectedRouteId={selectedRoute?.id}
               onSelectRoute={(r) => setSelectedRoute(r)}
               userLocation={geoLoc}
+              isTracking={isTracking}
               height="480px"
             />
           </div>
@@ -225,6 +304,7 @@ export function LiveMap() {
           <div>
             <RoutePlanner
               hazards={hazards}
+              userLocation={geoLoc}
               onSelectRoute={(r) => setSelectedRoute(r)}
               selectedRouteId={selectedRoute?.id}
               onRoutesCalculated={(calcRoutes) => {
@@ -267,6 +347,7 @@ export function LiveMap() {
               selectedHazard={selectedHazard}
               onSelectHazard={(h) => setSelectedHazard(h)}
               userLocation={geoLoc}
+              isTracking={isTracking}
               height="500px"
             />
           </div>
@@ -276,7 +357,7 @@ export function LiveMap() {
             <div className="panel panel-pad">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <Filter size={16} color="var(--lime)" />
+                  <Filter size={16} color="var(--accent)" />
                   <h4 style={{ fontSize: 15, margin: 0 }}>Filter Safety Hazards</h4>
                 </div>
                 <button
@@ -412,8 +493,8 @@ export function LiveMap() {
                         style={{
                           padding: '10px 14px',
                           borderRadius: 8,
-                          background: isSelected ? 'rgba(198, 243, 106, 0.05)' : 'rgba(255, 255, 255, 0.02)',
-                          border: isSelected ? '1px solid var(--lime)' : '1px solid var(--line)',
+                          background: isSelected ? 'rgba(45, 226, 176, 0.05)' : 'rgba(255, 255, 255, 0.02)',
+                          border: isSelected ? '1px solid var(--accent)' : '1px solid var(--line)',
                           cursor: 'pointer',
                           transition: 'border-color 0.15s ease',
                         }}
@@ -435,8 +516,8 @@ export function LiveMap() {
                             className={`pill ${h.severity === 'Critical'
                               ? 'pill-coral'
                               : h.severity === 'High'
-                                ? 'pill-coral'
-                                : 'pill-lime'
+                                ? 'pill-orange'
+                                : 'pill-accent'
                               }`}
                             style={{ fontSize: 9, padding: '1px 6px', flexShrink: 0 }}
                           >

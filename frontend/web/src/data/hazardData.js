@@ -1,3 +1,5 @@
+import { tokens } from '../theme/tokens'
+
 /**
  * Seed hazard demonstration dataset.
  * All entries are explicitly fictional and for demonstration purposes only.
@@ -27,12 +29,12 @@ export const HAZARD_STATUS = {
   RESOLVED: 'Resolved',
 }
 
-// Severity color palette adhering to the RakshaPath theme (Lime, Mint, Gold, Coral, Crimson)
+// Severity color palette: Critical = --danger, High = orange, Medium = amber, Low = --info
 export const SEVERITY_COLORS = {
-  Low: '#4facfe',       // Informational Blue
-  Medium: '#ffc66d',    // Gold/Amber
-  High: '#ff8c42',      // Orange
-  Critical: '#ff4d4d',  // Coral/Crimson
+  Low: tokens.info,       // Informational Blue (--info)
+  Medium: tokens.amber,   // Amber
+  High: tokens.orange,    // Orange
+  Critical: tokens.danger,// Coral Red (--danger)
 }
 
 const NOW = Date.now()

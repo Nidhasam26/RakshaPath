@@ -81,10 +81,13 @@ export const tripService = {
 
     const distKm = Number(distanceKm || activeRoute.distanceKm) || 12.4
     const durMins = Number(durationMins || activeRoute.durationMins) || 28
+    const isLive = options.mode === 'live' || Boolean(options.isLiveGps)
 
     const activeTrip = {
       id: `TRIP-ACT-${Date.now().toString().slice(-5)}`,
       plannedTripId: plannedTripId || null,
+      mode: isLive ? 'live' : 'demo',
+      isLiveGps: isLive,
       start: start.trim(),
       end: end.trim(),
       destination: end.trim(),
@@ -96,6 +99,7 @@ export const tripService = {
         durationMins: durMins,
         waypoints: activeRoute.waypoints || [],
         isPredefined: Boolean(activeRoute.isPredefined),
+        steps: activeRoute.steps || [],
       },
       isPredefined: Boolean(activeRoute.isPredefined),
       progress: 0,
@@ -109,6 +113,9 @@ export const tripService = {
       lastTickAt: Date.now(),
       warnings: [],
       warningTriggered: false,
+      isOffRoute: false,
+      consecutiveOffRouteCount: 0,
+      offRouteDistanceMeters: 0,
     }
 
     storageService.set(getUserActiveTripKey(userId), activeTrip)
@@ -117,7 +124,9 @@ export const tripService = {
     notificationService.addNotification(userId, {
       type: NOTIFICATION_TYPES.TRIP,
       title: 'Journey Started',
-      message: `Simulated trip to ${end} has begun along ${activeTrip.route.name}.`,
+      message: isLive
+        ? `Live navigation to ${end} has begun along ${activeTrip.route.name}.`
+        : `Simulated trip to ${end} has begun along ${activeTrip.route.name}.`,
       severity: 'Low',
     })
 
@@ -132,11 +141,17 @@ export const tripService = {
   },
 
   /**
-   * Advances simulated movement progress (0–100%).
+   * Advances simulated movement progress (0–100%) in DEMO mode only.
+   * If the trip is in LIVE GPS mode, physical progress is driven strictly by real GPS updates.
    */
   tickProgress(userId, deltaPercent = 5) {
     const trip = this.getActiveTrip(userId)
     if (!trip || trip.status !== 'Active' || trip.isPaused) return null
+
+    // Real GPS trips must never advance via simulated timer ticks
+    if (trip.mode === 'live' || trip.isLiveGps) {
+      return trip
+    }
 
     const nextProgress = Math.min(100, Math.round(trip.progress + deltaPercent))
     const ratio = (100 - nextProgress) / 100
@@ -559,6 +574,261 @@ export const tripService = {
     }
 
     return updated
+  },
+
+  /**
+   * Sets active trip tracking mode: 'live' (real GPS) vs 'demo' (simulated movement).
+   */
+  setTripMode(userId, mode = 'live') {
+    const trip = this.getActiveTrip(userId)
+    if (!trip) return null
+    const isLive = mode === 'live'
+    const updated = {
+      ...trip,
+      mode: isLive ? 'live' : 'demo',
+      isLiveGps: isLive,
+    }
+    storageService.set(getUserActiveTripKey(userId), updated)
+    this.syncActiveTripToSharedRegistry(userId, updated)
+
+    if (typeof window !== 'undefined' && window.dispatchEvent) {
+      window.dispatchEvent(new CustomEvent('rakshapath:trip_updated', { detail: { userId } }))
+    }
+    return updated
+  },
+
+  /**
+   * Processes fresh real-world GPS coordinates for an active trip.
+   * Projects point on route, calculates real progress, detects route deviations,
+   * handles noisy GPS with a monotonic progress filter, and checks destination arrival.
+   */
+  updateGpsPosition(userId, gpsCoords, options = {}) {
+    const trip = this.getActiveTrip(userId)
+    if (!trip) return null
+    if (trip.isPaused || trip.status === 'Paused') return trip
+    if (trip.status !== 'Active') return null
+
+    // Defensive validation: Ignore missing or non-finite coordinates, and out-of-bounds coordinates
+    if (
+      !gpsCoords ||
+      !Number.isFinite(gpsCoords.latitude) ||
+      !Number.isFinite(gpsCoords.longitude) ||
+      gpsCoords.latitude < -90 ||
+      gpsCoords.latitude > 90 ||
+      gpsCoords.longitude < -180 ||
+      gpsCoords.longitude > 180
+    ) {
+      return trip
+    }
+
+    const { latitude, longitude, accuracy = 20, heading = null, speed = null } = gpsCoords
+    const currentCoords = [latitude, longitude]
+
+    // Defensive validation: Ignore stale fixes (> 30s old) or out-of-order historical fixes
+    const now = Date.now()
+    const fixTimestamp = gpsCoords.timestamp || now
+    if (
+      (now - fixTimestamp > 30000 && !options.allowStale) ||
+      (trip.lastGpsTimestamp && fixTimestamp < trip.lastGpsTimestamp)
+    ) {
+      return trip
+    }
+
+    // Determine current distance travelled for forward-movement constraint
+    const lastTravelledKm =
+      typeof trip.distanceTravelledKm === 'number' && Number.isFinite(trip.distanceTravelledKm)
+        ? trip.distanceTravelledKm
+        : ((trip.progress || 0) / 100) * (trip.totalDistanceKm || 0)
+
+    // Project coordinates onto active route polyline with forward-jump safeguard
+    const projection = routeService.projectPointOnRoute(
+      currentCoords,
+      trip.route?.waypoints || [],
+      {
+        lastTravelledKm,
+        totalDistanceKm: trip.totalDistanceKm,
+        ...options,
+      }
+    )
+
+    // Calculate progress with monotonic filter to prevent noisy GPS from jumping backwards
+    const rawProgress = Math.min(100, Math.round(projection.fractionTravelled * 100))
+    const nextProgress = Math.max(trip.progress || 0, rawProgress)
+    const remainingKm = projection.remainingDistanceKm
+    const remainingMins = Math.max(
+      0,
+      Math.round(trip.totalDurationMins * (1 - projection.fractionTravelled))
+    )
+
+    // Off-route detection with consecutive confirmation and noise suppression
+    const offRouteThresholdKm = options.offRouteThresholdKm || 0.05 // 50m
+    let isOffRoute = Boolean(trip.isOffRoute)
+    let consecutiveCount = trip.consecutiveOffRouteCount || 0
+    let offRouteDistanceMeters = trip.offRouteDistanceMeters || 0
+
+    // Only assess off-route when GPS accuracy is reliable (<= 65m)
+    if (accuracy <= 65) {
+      if (projection.distanceToRouteKm > offRouteThresholdKm) {
+        consecutiveCount += 1
+        if (consecutiveCount >= 2) {
+          isOffRoute = true
+          offRouteDistanceMeters = Math.round(projection.distanceToRouteKm * 1000)
+        }
+      } else {
+        consecutiveCount = 0
+        isOffRoute = false
+        offRouteDistanceMeters = 0
+      }
+    }
+
+    // Destination arrival detection: check distance to actual destination coordinates
+    // Requires multiple consecutive reliable fixes to prevent a single noisy GPS jump from ending the trip.
+    const waypoints = trip.route?.waypoints || []
+    const destCoords =
+      trip.destinationCoords ||
+      trip.route?.destinationCoords ||
+      (waypoints.length > 0 ? waypoints[waypoints.length - 1] : null)
+
+    let consecutiveArrivalCount = trip.consecutiveArrivalCount || 0
+
+    if (destCoords && Number.isFinite(destCoords[0]) && Number.isFinite(destCoords[1])) {
+      const distToDestKm = routeService.calculateHaversineDistance(
+        latitude,
+        longitude,
+        destCoords[0],
+        destCoords[1]
+      )
+      // Arrival criteria: within 50 meters of destination with reliable GPS accuracy (<= 45m)
+      if (distToDestKm <= 0.05 && accuracy <= 45) {
+        consecutiveArrivalCount += 1
+        if (consecutiveArrivalCount >= 2) {
+          return this.endTrip(userId)
+        }
+      } else {
+        consecutiveArrivalCount = 0
+      }
+    }
+
+    // Proactive hazard detection along route
+    let warningTriggered = trip.warningTriggered
+    const warnings = [...(trip.warnings || [])]
+    let hazardAlert = trip.hazardAlert || null
+
+    if (remainingKm <= 5.5 && remainingKm >= 1.0 && !warningTriggered) {
+      const hazards = hazardService.getAllHazards(userId)
+      const nearbyHazards = hazards.filter(
+        (h) =>
+          h.status?.toLowerCase() === 'active' &&
+          (h.severity === 'Critical' || h.severity === 'High' || h.severity === 'Medium')
+      )
+      const targetHazard = nearbyHazards[0] || hazards[0]
+      if (targetHazard) {
+        const warningText = `Route advisory: "${targetHazard.title}" approximately ${remainingKm} km ahead on path.`
+        warnings.push(warningText)
+        warningTriggered = true
+        hazardAlert = { hazard: targetHazard, distanceKm: remainingKm }
+
+        notificationService.addNotification(userId, {
+          type: NOTIFICATION_TYPES.HAZARD,
+          title: 'Route Advisory',
+          message: warningText,
+          severity: 'High',
+        })
+      }
+    }
+
+    const updatedTrip = {
+      ...trip,
+      progress: nextProgress,
+      remainingKm,
+      remainingMins,
+      distanceTravelledKm: projection.distanceTravelledKm,
+      currentPosition: currentCoords,
+      lastGpsUpdateAt: Date.now(),
+      lastGpsTimestamp: fixTimestamp,
+      lastTickAt: Date.now(),
+      isOffRoute,
+      consecutiveOffRouteCount: consecutiveCount,
+      offRouteDistanceMeters,
+      consecutiveArrivalCount,
+      gpsAccuracy: accuracy,
+      heading,
+      speed,
+      warningTriggered,
+      warnings,
+      hazardAlert,
+    }
+
+    storageService.set(getUserActiveTripKey(userId), updatedTrip)
+    this.syncActiveTripToSharedRegistry(userId, updatedTrip)
+
+    if (typeof window !== 'undefined' && window.dispatchEvent) {
+      window.dispatchEvent(new CustomEvent('rakshapath:trip_updated', { detail: { userId } }))
+    }
+
+    return updatedTrip
+  },
+
+  /**
+   * Recalculates route from current GPS position to destination using OSRM when off-route.
+   */
+  async recalculateTripRoute(userId, currentCoords, hazards = []) {
+    const trip = this.getActiveTrip(userId)
+    if (!trip || trip.status !== 'Active') {
+      throw new Error('No active journey in progress to recalculate.')
+    }
+
+    const waypoints = trip.route?.waypoints || []
+    if (waypoints.length === 0) {
+      throw new Error('Active trip has no destination waypoints.')
+    }
+
+    const destCoords = waypoints[waypoints.length - 1]
+    const updatedRoutes = await routeService.fetchRealRouteOSRM(
+      currentCoords,
+      destCoords,
+      hazards,
+      {
+        originName: 'Current Location',
+        destinationName: trip.end,
+      }
+    )
+
+    if (!updatedRoutes || updatedRoutes.length === 0) {
+      throw new Error('Unable to compute a recalculated road route from current position.')
+    }
+
+    const newRoute = updatedRoutes[0]
+    const updatedTrip = {
+      ...trip,
+      route: {
+        ...newRoute,
+        waypoints: newRoute.waypoints,
+        distanceKm: newRoute.distanceKm,
+        durationMins: newRoute.durationMins,
+        steps: newRoute.steps || [],
+      },
+      totalDistanceKm: newRoute.distanceKm,
+      totalDurationMins: newRoute.durationMins,
+      remainingKm: newRoute.distanceKm,
+      remainingMins: newRoute.durationMins,
+      progress: 0,
+      distanceTravelledKm: 0,
+      isOffRoute: false,
+      consecutiveOffRouteCount: 0,
+      consecutiveArrivalCount: 0,
+      offRouteDistanceMeters: 0,
+      lastTickAt: Date.now(),
+    }
+
+    storageService.set(getUserActiveTripKey(userId), updatedTrip)
+    this.syncActiveTripToSharedRegistry(userId, updatedTrip)
+
+    if (typeof window !== 'undefined' && window.dispatchEvent) {
+      window.dispatchEvent(new CustomEvent('rakshapath:trip_updated', { detail: { userId } }))
+    }
+
+    return updatedTrip
   },
 
   /**

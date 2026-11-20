@@ -1,0 +1,110 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="100%" height="100%" fill="none">
+  <defs>
+    <!-- Left Wing Gradient: Deep Mint to Vibrant Mint -->
+    <linearGradient id="rp-mint-wing" x1="20" y1="20" x2="60" y2="105" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="35%" stop-color="#2dd4bf" />
+      <stop offset="100%" stop-color="#64e2ba" />
+    </linearGradient>
+
+    <!-- Right Wing Gradient: Radiant Mint to Electric Lime -->
+    <linearGradient id="rp-lime-wing" x1="100" y1="20" x2="60" y2="105" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#22c55e" />
+      <stop offset="50%" stop-color="#84cc16" />
+      <stop offset="100%" stop-color="#c6f36a" />
+    </linearGradient>
+
+    <!-- Path / Road Dynamic Gradient -->
+    <linearGradient id="rp-path-grad" x1="60" y1="102" x2="60" y2="46" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#0b0f17" stop-opacity="0.85" />
+      <stop offset="50%" stop-color="#1e293b" stop-opacity="0.95" />
+      <stop offset="100%" stop-color="#c6f36a" />
+    </linearGradient>
+
+    <!-- Emergency Beacon Pulse: Coral Glow -->
+    <radialGradient id="rp-coral-pulse" cx="60" cy="42" r="14" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#ff777c" />
+      <stop offset="65%" stop-color="#f43f5e" />
+      <stop offset="100%" stop-color="#be123c" stop-opacity="0" />
+    </radialGradient>
+
+    <!-- Subtle Ambient Glow -->
+    <filter id="rp-glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="3.5" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- Ambient Backlight Halo -->
+  <circle cx="60" cy="50" r="42" fill="url(#rp-coral-pulse)" opacity="0.18" />
+
+  <!-- LEFT SHIELD / PIN WING -->
+  <!-- Aerodynamic contour flowing from top arch, curving along pin apex, tapering to bottom point -->
+  <path
+    d="M 60 16
+       C 44 16, 22 24, 20 44
+       C 18 62, 36 82, 60 104
+       L 60 84
+       C 43 69, 31 56, 33 44
+       C 34 32, 48 26, 60 26
+       Z"
+    fill="url(#rp-mint-wing)"
+  />
+
+  <!-- RIGHT SHIELD / PIN WING -->
+  <path
+    d="M 60 16
+       C 76 16, 98 24, 100 44
+       C 102 62, 84 82, 60 104
+       L 60 84
+       C 77 69, 89 56, 87 44
+       C 86 32, 72 26, 60 26
+       Z"
+    fill="url(#rp-lime-wing)"
+  />
+
+  <!-- INNER SAFE PATHWAY (Perspective Road cutting forward through the shield) -->
+  <path
+    d="M 52 100
+       L 68 100
+       L 64 54
+       C 64 54, 60 52, 56 54
+       Z"
+    fill="url(#rp-path-grad)"
+  />
+
+  <!-- Central Pathway Guidance Dash Line -->
+  <path
+    d="M 60 96 L 60 84 M 60 76 L 60 66 M 60 58 L 60 52"
+    stroke="#c6f36a"
+    stroke-width="2.5"
+    stroke-linecap="round"
+    stroke-dasharray="0.1 6"
+  />
+
+  <!-- THE PROTECTIVE BEACON & PIN EYE (Focal Core) -->
+  <!-- Outer precision protective ring -->
+  <circle
+    cx="60"
+    cy="42"
+    r="13"
+    fill="#0b0f17"
+    stroke="#64e2ba"
+    stroke-width="2.5"
+  />
+
+  <!-- Inner emergency vigilance diamond star (Raksha Star) -->
+  <path
+    d="M 60 33
+       Q 60 42, 69 42
+       Q 60 42, 60 51
+       Q 60 42, 51 42
+       Q 60 42, 60 33
+       Z"
+    fill="#ff777c"
+    filter="url(#rp-glow)"
+  />
+
+  <!-- Center luminous point -->
+  <circle cx="60" cy="42" r="2.2" fill="#ffffff" />
+</svg>

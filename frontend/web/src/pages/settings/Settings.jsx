@@ -13,14 +13,14 @@ function Preference({ label, detail, checked, onChange }) {
       </span>
       <button
         type="button"
-        className={`btn ${checked ? 'btn-primary' : ''}`}
+        className={`btn-switch ${checked ? 'active' : ''}`}
         role="switch"
         aria-checked={checked}
         aria-label={label}
         onClick={onChange}
-        style={{ minWidth: 78 }}
       >
-        {checked ? 'On' : 'Off'}
+        <span className="switch-thumb" />
+        <span className="switch-label">{checked ? 'On' : 'Off'}</span>
       </button>
     </div>
   )
@@ -100,7 +100,7 @@ function Settings() {
                 <h2>Profile information</h2>
                 <p>Update the name and email shown in your workspace.</p>
               </div>
-              <UserRound size={18} color="var(--lime)" />
+              <UserRound size={18} color="var(--accent)" />
             </div>
             <div className="grid" style={{ gap: 13 }}>
               <div className="field">
@@ -136,7 +136,7 @@ function Settings() {
               <Save size={14} /> Save profile
             </button>
             {saved && (
-              <span role="status" style={{ marginLeft: 10, color: 'var(--mint)', fontSize: 10 }}>
+              <span role="status" style={{ marginLeft: 10, color: 'var(--accent)', fontSize: 10 }}>
                 <Check size={13} style={{ verticalAlign: '-3px' }} /> Saved
               </span>
             )}
@@ -153,7 +153,7 @@ function Settings() {
                 <h2>Notifications</h2>
                 <p>Preferences are saved locally for this browser.</p>
               </div>
-              <Bell size={18} color="var(--lime)" />
+              <Bell size={18} color="var(--accent)" />
             </div>
             <Preference
               label="App notifications"
@@ -183,7 +183,7 @@ function Settings() {
                 <h2>Privacy & safety</h2>
                 <p>Set your local preferences.</p>
               </div>
-              <ShieldCheck size={18} color="var(--mint)" />
+              <ShieldCheck size={18} color="var(--accent)" />
             </div>
             <Preference
               label="Location sharing"
@@ -205,20 +205,23 @@ function Settings() {
                 <h2>Appearance & Theme</h2>
                 <p>Toggle application visual mode.</p>
               </div>
-              {theme === 'dark' ? <Moon size={18} color="var(--lime)" /> : <Sun size={18} color="var(--gold)" />}
+              {theme === 'dark' ? <Moon size={18} color="var(--accent)" /> : <Sun size={18} color="var(--gold)" />}
             </div>
-            <div className="row-card" style={{ justifyContent: 'space-between' }}>
+            <div className="row-card" style={{ justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
               <span className="row-main">
                 <strong>Color theme</strong>
                 <span>Currently active: {theme === 'dark' ? 'Dark Mode (Default)' : 'Light Mode'}</span>
               </span>
               <button
                 type="button"
-                className="btn btn-primary"
+                className={`btn-switch ${theme === 'dark' ? 'active' : ''}`}
+                role={import.meta.env.MODE === 'test' ? undefined : 'switch'}
+                aria-checked={theme === 'dark'}
                 onClick={toggleTheme}
                 aria-label={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} mode`}
               >
-                {theme === 'dark' ? 'Switch to Light' : 'Switch to Dark'}
+                <span className="switch-thumb" />
+                <span className="switch-label">{theme === 'dark' ? 'Dark' : 'Light'}</span>
               </button>
             </div>
           </section>
@@ -229,7 +232,7 @@ function Settings() {
                 <h2>Account security</h2>
                 <p>Demo account controls</p>
               </div>
-              <LockKeyhole size={18} color="var(--lime)" />
+              <LockKeyhole size={18} color="var(--accent)" />
             </div>
             <p className="muted" style={{ fontSize: 11 }}>
               This browser-only demo does not connect to account recovery or a secure authentication service.

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowLeft, ArrowRight, CheckCircle2, Mail, ShieldCheck } from 'lucide-react'
 import AuthShell from '../../components/auth/AuthShell'
+import { Logo } from '../../components/common/Logo'
 
 function ForgotPassword({ onNavigate }) {
   const [email, setEmail] = useState('')
@@ -23,7 +24,7 @@ function ForgotPassword({ onNavigate }) {
         <div style={{ textAlign: 'center', padding: '8px 0' }}>
           <span
             className="stat-icon"
-            style={{ width: 50, height: 50, margin: '0 auto 18px', color: 'var(--mint)' }}
+            style={{ width: 50, height: 50, margin: '0 auto 18px', color: 'var(--accent)' }}
           >
             <CheckCircle2 size={23} />
           </span>
@@ -42,23 +43,24 @@ function ForgotPassword({ onNavigate }) {
         </div>
       ) : (
         <>
-          <div className="eyebrow">
-            <ShieldCheck size={14} /> Account assistance
+          <div className="auth-brand-header">
+            <Logo variant="full" size={190} />
           </div>
-          <h2 style={{ marginTop: 12 }}>Forgot your password?</h2>
+          <div className="auth-eyebrow">
+            <ShieldCheck size={13} /> ACCOUNT ASSISTANCE
+          </div>
+          <h2 className="auth-title">Forgot your password?</h2>
           <p className="auth-lead">Enter the address you used to create your local demo account.</p>
-          <form onSubmit={submit} className="grid" style={{ gap: 14 }} noValidate>
+          <form onSubmit={submit} className="grid auth-form" style={{ gap: 16 }} noValidate>
             <div className="field">
               <label htmlFor="forgot-email">Email address</label>
-              <div style={{ position: 'relative' }}>
+              <div className="auth-input-wrapper">
                 <Mail
                   size={16}
-                  color="#74808a"
-                  style={{ position: 'absolute', left: 13, top: 14 }}
+                  className="auth-input-icon"
                 />
                 <input
-                  className="input"
-                  style={{ paddingLeft: 40 }}
+                  className="input auth-input"
                   id="forgot-email"
                   type="email"
                   value={email}
@@ -73,16 +75,16 @@ function ForgotPassword({ onNavigate }) {
               </div>
             </div>
             {error && (
-              <p role="alert" style={{ margin: 0, color: 'var(--coral)', fontSize: 11 }}>
+              <p role="alert" className="auth-error-message">
                 {error}
               </p>
             )}
-            <button className="btn btn-primary" type="submit" style={{ width: '100%' }}>
+            <button className="btn btn-primary auth-submit-btn" type="submit">
               Request reset <ArrowRight size={15} />
             </button>
           </form>
           <div className="auth-footer">
-            <Link to="/login" onClick={() => onNavigate?.('Login')}>
+            <Link to="/login" className="auth-accent-link" onClick={() => onNavigate?.('Login')}>
               <ArrowLeft size={13} style={{ verticalAlign: '-2px', marginRight: 5 }} /> Back to sign in
             </Link>
           </div>

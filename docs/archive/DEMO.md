@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> **SUPERSEDED (2026-11-20)**: This document described legacy live-server demonstration routes and mobile Flutter scripts. It has been superseded by the client-side demonstration system in `frontend/web` (FR-100 one-click demo roles, OSRM routing, and simulated offline SOS). See [README.md](../../README.md) and [PRD.md](../../PRD.md).
+
 # RakshaPath: Demo Script & Backup Strategy
 
 ## 1. Demo Routes & Scenarios
@@ -43,7 +46,7 @@
 ## 3. Fallback Plan (If Live APIs Fail)
 
 * **TomTom / Weather API Quota Exhaustion**:
-  * Toggle `DEMO_MODE=true` in `.env`. The backend automatically seeds and serves fixed fixtures from [`docs/sample_hazards.json`](file:///c:/Users/nihall/Desktop/RakshaPath/docs/sample_hazards.json).
+  * Toggle `DEMO_MODE=true` in `.env`. The backend automatically seeds and serves fixed fixtures from [`docs/sample_hazards.json`](../sample_hazards.json).
 * **FCM Push Notification Delay**:
   * The mobile app contains an in-app polling fallback that checks for hazards ahead during active trips if push messages are delayed.
 * **No Cellular Reception during Demo**:

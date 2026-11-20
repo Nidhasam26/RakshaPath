@@ -37,18 +37,19 @@ docker compose up -d --build
 * Swagger Documentation: `http://localhost:8000/docs`
 * Health Check: `http://localhost:8000/health`
 
-### Step 3: Running Mobile App (Planned)
+### Step 3: Running Primary Web Application (`frontend/web`)
 ```bash
-cd app
-flutter pub get
-flutter run
-```
-
-### Step 4: Running Police Dashboard (Planned)
-```bash
-cd dashboard
+cd frontend/web
 npm install
 npm run dev
+# Open http://localhost:5173
+```
+
+### Step 4: Running Mobile App (Flutter — Architecture Preserved)
+```bash
+cd frontend/mobile
+flutter analyze
+flutter test
 ```
 
 ---
@@ -56,7 +57,7 @@ npm run dev
 ## 4. Common Errors & Troubleshooting
 
 * **Issue: `PostGIS extension not found` or `function st_dwithin does not exist`**
-  * **Fix**: Ensure the database was booted with the official `postgis/postgis` image and [`infra/init-db.sql`](file:///c:/Users/nihall/Desktop/RakshaPath/infra/init-db.sql) executed. Run:
+  * **Fix**: Ensure the database was booted with the official `postgis/postgis` image and [`infra/init-db.sql`](../infra/init-db.sql) executed. Run:
     ```bash
     docker compose exec db psql -U rakshapath -d rakshapath_db -c "CREATE EXTENSION IF NOT EXISTS postgis;"
     ```

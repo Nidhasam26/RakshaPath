@@ -81,7 +81,7 @@ export function HazardReportModal({ onClose, onSubmit, defaultCoordinates = [12.
           maxWidth: 500,
           width: '100%',
           position: 'relative',
-          maxHeight: '92vh',
+          maxHeight: 'min(92vh, 92dvh)',
           overflowY: 'auto',
         }}
       >
@@ -193,7 +193,7 @@ export function HazardReportModal({ onClose, onSubmit, defaultCoordinates = [12.
             />
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 10 }}>
             <div>
               <label htmlFor="hazard-lat" style={{ display: 'block', fontSize: 11, fontWeight: 600, marginBottom: 4 }}>
                 Latitude *

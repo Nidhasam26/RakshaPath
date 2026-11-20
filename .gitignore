@@ -75,8 +75,17 @@ ml/data/raw/*
 *.log
 coverage/
 
-#Local backups - do not commit
+# Local backups - do not commit
 frontend-dashboard-backup/
+
+# Frontend artifacts, screenshots & temporary test profiles
+frontend/web/artifacts/
+artifacts/
+screenshots/
+test.png
+.chrome-temp*/
+frontend/web/.chrome-temp*/
+
 
 # Flutter generated files (all project locations)
 **/.dart_tool/

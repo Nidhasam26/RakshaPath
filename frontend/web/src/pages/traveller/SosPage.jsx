@@ -47,7 +47,7 @@ export function SosPage({ defaultCountdownSeconds = 5 }) {
   const [history, setHistory] = useState(() => sosService.getHistory(user?.id))
 
   // Auxiliary emergency modal states
-  const [isSirenOn, setIsSirenOn] = useState(false)
+  const [isSirenOn, setIsSirenOn] = useState(() => sirenPlayer.getStatus())
   const [showFakeCall, setShowFakeCall] = useState(false)
   const [showCheckIn, setShowCheckIn] = useState(false)
   const [showSuspicious, setShowSuspicious] = useState(false)
@@ -74,6 +74,7 @@ export function SosPage({ defaultCountdownSeconds = 5 }) {
   // Confirm and dispatch simulated alert
   const handleConfirmSos = useCallback(() => {
     setSosState('active')
+    sirenPlayer.start().catch(() => {})
     const now = new Date()
 
     // Step 1: Prepared
@@ -184,27 +185,39 @@ export function SosPage({ defaultCountdownSeconds = 5 }) {
 
   // Ensure all active timeouts and siren audio are cleanly stopped on unmount
   useEffect(() => {
+    const unsubscribe = sirenPlayer.subscribe((active) => {
+      setIsSirenOn(active)
+    })
     return () => {
+      unsubscribe()
       timeoutsRef.current.forEach(clearTimeout)
       timeoutsRef.current = []
       sirenPlayer.stop()
     }
   }, [])
 
-  // Start countdown
+  // Start countdown & sound emergency siren
   const handleStartCountdown = () => {
     setCountdown(configuredCountdown)
     setConfirmBypass(false)
     setSosState('counting')
+    sirenPlayer.start().catch(() => {})
     // Pre-emptively request geolocation
     requestLocation().catch(() => { })
   }
 
-  // Cancel countdown before trigger
+  // Cancel countdown before trigger: immediately stops siren
   const handleCancelCountdown = () => {
     setSosState('cancelled')
     setConfirmBypass(false)
     setCountdown(configuredCountdown)
+    sirenPlayer.stop()
+  }
+
+  // Reset SOS demo: stops siren and returns to idle
+  const handleResetSos = () => {
+    sirenPlayer.stop()
+    setSosState('idle')
   }
 
   // Retry simulated transmission (handles offline recovery with idempotency)
@@ -250,12 +263,10 @@ export function SosPage({ defaultCountdownSeconds = 5 }) {
 
   // Toggle demonstration siren
   const handleToggleSiren = () => {
-    if (isSirenOn) {
+    if (sirenPlayer.getStatus()) {
       sirenPlayer.stop()
-      setIsSirenOn(false)
     } else {
-      sirenPlayer.start()
-      setIsSirenOn(true)
+      sirenPlayer.start().catch(() => {})
     }
   }
 
@@ -293,17 +304,18 @@ export function SosPage({ defaultCountdownSeconds = 5 }) {
           display: 'flex',
           alignItems: 'center',
           gap: 12,
+          flexWrap: 'wrap',
           padding: '12px 18px',
           borderRadius: 8,
-          background: 'rgba(255, 107, 107, 0.12)',
-          border: '1px solid var(--coral, #ff6b6b)',
-          color: 'var(--coral, #ff6b6b)',
+          background: 'rgba(255, 90, 79, 0.12)',
+          border: '1px solid var(--danger)',
+          color: 'var(--danger)',
           marginBottom: 20,
           fontSize: 13,
         }}
       >
         <ShieldAlert size={20} style={{ flexShrink: 0 }} />
-        <div style={{ flex: 1 }}>
+        <div style={{ flex: '1 1 200px', minWidth: 0 }}>
           <strong>DEMONSTRATION SIMULATION ONLY · NO LIVE 112 DISPATCH</strong>
           <p style={{ margin: '3px 0 0', fontSize: 11, opacity: 0.9 }}>
             This application does NOT contact emergency services or send real SMS messages. In a real emergency, call 112 directly.
@@ -329,8 +341,8 @@ export function SosPage({ defaultCountdownSeconds = 5 }) {
             padding: '10px 16px',
             borderRadius: 8,
             background: 'rgba(255, 198, 109, 0.15)',
-            border: '1px solid var(--amber, #ffc66d)',
-            color: 'var(--amber, #ffc66d)',
+            border: '1px solid var(--amber)',
+            color: 'var(--amber)',
             marginBottom: 20,
             fontSize: 12,
           }}
@@ -361,6 +373,8 @@ export function SosPage({ defaultCountdownSeconds = 5 }) {
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
+                justifyContent: 'center',
+                flexWrap: 'wrap',
                 gap: 8,
                 margin: '0 auto 24px',
                 padding: '6px 14px',
@@ -374,7 +388,7 @@ export function SosPage({ defaultCountdownSeconds = 5 }) {
                 <button
                   key={secs}
                   type="button"
-                  className={`btn ${configuredCountdown === secs ? 'btn-primary' : 'btn-quiet'}`}
+                  className={`btn ${configuredCountdown === secs ? 'btn-toggle-active' : 'btn-quiet'}`}
                   style={{ minHeight: 28, padding: '2px 10px', fontSize: 11, borderRadius: 14 }}
                   onClick={() => {
                     setConfiguredCountdown(secs)
@@ -406,7 +420,7 @@ export function SosPage({ defaultCountdownSeconds = 5 }) {
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: 8,
-                  boxShadow: '0 0 0 12px rgba(255, 107, 107, 0.2), 0 12px 36px rgba(255, 107, 107, 0.4)',
+                  boxShadow: '0 0 0 12px rgba(255, 90, 79, 0.2), 0 12px 36px rgba(255, 90, 79, 0.4)',
                   cursor: 'pointer',
                   transition: 'transform 0.15s ease',
                 }}
@@ -434,16 +448,16 @@ export function SosPage({ defaultCountdownSeconds = 5 }) {
                 width: 160,
                 height: 160,
                 borderRadius: '50%',
-                border: '6px solid var(--coral, #ff6b6b)',
+                border: '6px solid var(--danger)',
                 margin: '24px auto',
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                background: 'rgba(255, 107, 107, 0.08)',
+                background: 'rgba(255, 90, 79, 0.08)',
               }}
             >
-              <span style={{ fontSize: 56, fontWeight: 900, color: 'var(--coral, #ff6b6b)' }}>
+              <span style={{ fontSize: 56, fontWeight: 900, color: 'var(--danger)' }}>
                 {countdown}
               </span>
               <span style={{ fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--muted)' }}>
@@ -453,14 +467,27 @@ export function SosPage({ defaultCountdownSeconds = 5 }) {
 
             {/* Action buttons: prominent cancel + guarded bypass shortcut (Point 2) */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14, alignItems: 'center', marginTop: 20 }}>
-              <button
-                type="button"
-                className="btn btn-quiet"
-                onClick={handleCancelCountdown}
-                style={{ minHeight: 48, padding: '0 32px', fontSize: 16, fontWeight: 700 }}
-              >
-                Cancel SOS
-              </button>
+              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'center' }}>
+                <button
+                  type="button"
+                  className="btn btn-quiet"
+                  onClick={handleCancelCountdown}
+                  style={{ minHeight: 48, padding: '0 32px', fontSize: 16, fontWeight: 700 }}
+                >
+                  Cancel SOS
+                </button>
+                {isSirenOn && (
+                  <button
+                    type="button"
+                    className="btn btn-quiet"
+                    onClick={handleToggleSiren}
+                    style={{ minHeight: 48, padding: '0 20px', fontSize: 14, display: 'inline-flex', alignItems: 'center', gap: 6 }}
+                    aria-label="Silence siren audio"
+                  >
+                    <VolumeX size={16} /> Silence Siren
+                  </button>
+                )}
+              </div>
 
               {!confirmBypass ? (
                 <button
@@ -524,13 +551,13 @@ export function SosPage({ defaultCountdownSeconds = 5 }) {
                 marginBottom: 12,
               }}
             >
-              <RotateCcw size={32} color="var(--lime)" />
+              <RotateCcw size={32} color="var(--accent)" />
             </div>
             <h2 style={{ fontSize: 22, margin: '0 0 6px' }}>SOS Countdown Cancelled</h2>
             <p className="muted" style={{ fontSize: 13, marginBottom: 20 }}>
               No emergency alert was prepared or transmitted.
             </p>
-            <button type="button" className="btn btn-primary" onClick={() => setSosState('idle')}>
+            <button type="button" className="btn btn-primary" onClick={handleResetSos}>
               Return to SOS Home
             </button>
           </div>
@@ -539,17 +566,36 @@ export function SosPage({ defaultCountdownSeconds = 5 }) {
         {sosState === 'active' && (
           <div style={{ textAlign: 'left' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 10 }}>
-              <span className={`pill ${activeAlert?.status === SOS_STATUS.SENT ? 'pill-coral' : 'pill-lime'}`}>
+              <span className={`pill ${activeAlert?.status === SOS_STATUS.SENT ? 'pill-coral' : 'pill-accent'}`}>
                 {activeAlert?.status === SOS_STATUS.SENT ? 'SIMULATED ALERT TRANSMITTED' : 'ALERT QUEUED (OFFLINE)'}
               </span>
-              <button
-                type="button"
-                className="btn btn-quiet"
-                onClick={() => setSosState('idle')}
-                style={{ fontSize: 12 }}
-              >
-                Reset SOS Demo
-              </button>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  className={`btn ${isSirenOn ? 'btn-danger' : 'btn-quiet'}`}
+                  onClick={handleToggleSiren}
+                  style={{ fontSize: 12, minHeight: 34, display: 'inline-flex', alignItems: 'center', gap: 6 }}
+                  aria-label={isSirenOn ? 'Stop Siren' : 'Start Siren'}
+                >
+                  {isSirenOn ? (
+                    <>
+                      <VolumeX size={14} /> Stop Siren
+                    </>
+                  ) : (
+                    <>
+                      <Volume2 size={14} /> Start Siren
+                    </>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-quiet"
+                  onClick={handleResetSos}
+                  style={{ fontSize: 12, minHeight: 34 }}
+                >
+                  Reset SOS Demo
+                </button>
+              </div>
             </div>
 
             <h2 style={{ fontSize: 22, margin: '0 0 8px' }}>Emergency Alert Lifecycle (Simulated)</h2>
@@ -568,10 +614,10 @@ export function SosPage({ defaultCountdownSeconds = 5 }) {
                     padding: '12px 16px',
                     borderRadius: 8,
                     background: 'var(--panel-alt, rgba(255, 255, 255, 0.03))',
-                    borderLeft: `4px solid ${item.status === SOS_STATUS.SENT ? 'var(--lime)' : 'var(--amber, #ffc66d)'}`,
+                    borderLeft: `4px solid ${item.status === SOS_STATUS.SENT ? 'var(--accent)' : 'var(--amber)'}`,
                   }}
                 >
-                  <span style={{ color: item.status === SOS_STATUS.SENT ? 'var(--lime)' : 'var(--amber, #ffc66d)', marginTop: 2 }}>
+                  <span style={{ color: item.status === SOS_STATUS.SENT ? 'var(--accent)' : 'var(--amber)', marginTop: 2 }}>
                     <CheckCircle2 size={18} />
                   </span>
                   <div style={{ flex: 1 }}>
@@ -591,7 +637,7 @@ export function SosPage({ defaultCountdownSeconds = 5 }) {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 14, marginBottom: 20 }}>
               <div className="panel panel-pad" style={{ background: 'rgba(255,255,255,0.02)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                  <MapPin size={16} color="var(--lime)" />
+                  <MapPin size={16} color="var(--accent)" />
                   <strong>Transmitted Location</strong>
                 </div>
                 <p style={{ fontSize: 13, margin: '0 0 4px' }}>
@@ -606,7 +652,7 @@ export function SosPage({ defaultCountdownSeconds = 5 }) {
 
               <div className="panel panel-pad" style={{ background: 'rgba(255,255,255,0.02)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                  <Users size={16} color="var(--lime)" />
+                  <Users size={16} color="var(--accent)" />
                   <strong>Simulated Recipients</strong>
                 </div>
                 <p style={{ fontSize: 13, margin: '0 0 4px' }}>
@@ -671,7 +717,7 @@ export function SosPage({ defaultCountdownSeconds = 5 }) {
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
                 <strong>Fake Phone Call</strong>
-                <span className="pill pill-lime">DISCREET</span>
+                <span className="pill pill-accent">DISCREET</span>
               </div>
               <p className="muted" style={{ fontSize: 12, margin: '0 0 16px' }}>
                 Simulate an incoming phone call to excuse yourself from uncomfortable situations.
@@ -692,7 +738,7 @@ export function SosPage({ defaultCountdownSeconds = 5 }) {
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
                 <strong>Safety Check-In</strong>
-                <span className="pill pill-lime">TIMER</span>
+                <span className="pill pill-accent">TIMER</span>
               </div>
               <p className="muted" style={{ fontSize: 12, margin: '0 0 16px' }}>
                 Set a countdown timer. If you do not mark "I am safe", your circle is alerted.
@@ -777,7 +823,7 @@ export function SosPage({ defaultCountdownSeconds = 5 }) {
       <section className="panel panel-pad" style={{ marginBottom: 24 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <History size={18} color="var(--lime)" />
+            <History size={18} color="var(--accent)" />
             <h3 style={{ fontSize: 17, margin: 0 }}>Your SOS History</h3>
           </div>
           {history.length > 0 && (
@@ -818,7 +864,7 @@ export function SosPage({ defaultCountdownSeconds = 5 }) {
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <strong style={{ fontSize: 13 }}>{item.id}</strong>
                     <span
-                      className={`pill ${item.status === SOS_STATUS.SENT ? 'pill-coral' : 'pill-lime'}`}
+                      className={`pill ${item.status === SOS_STATUS.SENT ? 'pill-coral' : 'pill-accent'}`}
                       style={{ fontSize: 10, padding: '2px 6px' }}
                     >
                       {item.status}

@@ -1,0 +1,116 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 220" width="100%" height="100%" fill="none">
+  <defs>
+    <!-- Left Wing Gradient: Mint -->
+    <linearGradient id="rp-c-mint" x1="20" y1="20" x2="60" y2="105" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="35%" stop-color="#2dd4bf" />
+      <stop offset="100%" stop-color="#64e2ba" />
+    </linearGradient>
+
+    <!-- Right Wing Gradient: Lime -->
+    <linearGradient id="rp-c-lime" x1="100" y1="20" x2="60" y2="105" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#22c55e" />
+      <stop offset="50%" stop-color="#84cc16" />
+      <stop offset="100%" stop-color="#c6f36a" />
+    </linearGradient>
+
+    <linearGradient id="rp-c-path" x1="60" y1="102" x2="60" y2="46" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#0b0f17" stop-opacity="0.8" />
+      <stop offset="60%" stop-color="#1e293b" stop-opacity="0.95" />
+      <stop offset="100%" stop-color="#c6f36a" />
+    </linearGradient>
+
+    <radialGradient id="rp-c-coral-glow" cx="60" cy="42" r="14" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#ff777c" />
+      <stop offset="70%" stop-color="#f43f5e" />
+      <stop offset="100%" stop-color="#be123c" stop-opacity="0" />
+    </radialGradient>
+  </defs>
+
+  <!-- CENTERED EMBLEM (x=115..205, y=10..100) -->
+  <g transform="translate(115, 10)">
+    <!-- Halo -->
+    <circle cx="45" cy="45" r="36" fill="url(#rp-c-coral-glow)" opacity="0.18" />
+
+    <!-- Left Wing -->
+    <path
+      d="M 45 10
+         C 32 10, 15 17, 13 32
+         C 11 47, 26 62, 45 79
+         L 45 64
+         C 31 52, 22 42, 24 33
+         C 25 24, 36 19, 45 19
+         Z"
+      fill="url(#rp-c-mint)"
+    />
+
+    <!-- Right Wing -->
+    <path
+      d="M 45 10
+         C 58 10, 75 17, 77 32
+         C 79 47, 64 62, 45 79
+         L 45 64
+         C 59 52, 68 42, 66 33
+         C 65 24, 54 19, 45 19
+         Z"
+      fill="url(#rp-c-lime)"
+    />
+
+    <!-- Inner Pathway -->
+    <path
+      d="M 39 76
+         L 51 76
+         L 48 40
+         C 48 40, 45 38, 42 40
+         Z"
+      fill="url(#rp-c-path)"
+    />
+
+    <!-- Pathway Dash -->
+    <path
+      d="M 45 73 L 45 63 M 45 56 L 45 49 M 45 44 L 45 40"
+      stroke="#c6f36a"
+      stroke-width="1.8"
+      stroke-linecap="round"
+      stroke-dasharray="0.1 4.5"
+    />
+
+    <!-- Protective Core Beacon Ring -->
+    <circle
+      cx="45"
+      cy="31"
+      r="10"
+      fill="#0b0f17"
+      stroke="#64e2ba"
+      stroke-width="2"
+    />
+
+    <!-- Emergency Star -->
+    <path
+      d="M 45 24
+         Q 45 31, 52 31
+         Q 45 31, 45 38
+         Q 45 31, 38 31
+         Q 45 31, 45 24
+         Z"
+      fill="#ff777c"
+    />
+
+    <circle cx="45" cy="31" r="1.6" fill="#ffffff" />
+  </g>
+
+  <!-- WORDMARK (Centered at x=160) -->
+  <text x="160" y="142" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Inter', sans-serif" font-size="34" font-weight="800" letter-spacing="-0.03em">
+    <tspan fill="#ffffff">Raksha</tspan><tspan fill="#c6f36a">Path</tspan>
+  </text>
+
+  <!-- SUBTITLE SPECIFIER -->
+  <text x="160" y="165" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Inter', sans-serif" font-size="10.5" font-weight="700" fill="#64e2ba" letter-spacing="0.24em">
+    INTELLIGENT SAFETY NAVIGATION
+  </text>
+
+  <!-- OFFICIAL BRAND TAGLINE -->
+  <text x="160" y="194" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Inter', sans-serif" font-size="12" font-style="italic" font-weight="400" fill="#94a3b8" letter-spacing="0.02em">
+    "Know the danger before you reach it."
+  </text>
+</svg>

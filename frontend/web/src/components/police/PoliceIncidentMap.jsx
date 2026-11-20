@@ -2,12 +2,13 @@ import { useMemo } from 'react'
 import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet'
 import { Siren } from 'lucide-react'
 import 'leaflet/dist/leaflet.css'
+import { tokens } from '../../theme/tokens'
 
 const SEVERITY_COLORS = {
-  Critical: '#ff4d4d',
-  High: '#ff8c42',
-  Medium: '#ffc66d',
-  Low: '#4facfe',
+  Critical: tokens.danger,
+  High: tokens.orange,
+  Medium: tokens.amber,
+  Low: tokens.info,
 }
 
 const DEFAULT_CENTER = [12.955, 77.63] // Central Bangalore corridor
@@ -107,13 +108,12 @@ export function PoliceIncidentMap({ incidents = [], selectedIncidentId, onSelect
 
       {/* Demo Badge */}
       <span
-        className="pill pill-lime"
+        className="badge-demo"
         style={{
           position: 'absolute',
           top: 10,
           right: 10,
           zIndex: 500,
-          fontSize: 10,
         }}
       >
         SIMULATED INCIDENT MAP

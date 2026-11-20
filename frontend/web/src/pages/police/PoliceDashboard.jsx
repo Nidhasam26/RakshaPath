@@ -21,15 +21,16 @@ import { demoPoliceAlerts } from '../../data/demoData'
 import { sosService } from '../../services/sosService'
 import storageService from '../../services/storageService'
 import { POLICE_ALERTS_KEY } from '../../services/mockApi'
+import { tokens } from '../../theme/tokens'
 
 const PoliceAnalyticsCharts = lazy(() => import('../../components/police/PoliceAnalyticsCharts'))
 const PoliceIncidentMap = lazy(() => import('../../components/police/PoliceIncidentMap'))
 
 const SEVERITY_COLORS = {
-  Critical: '#ff4d4d',
-  High: '#ff8c42',
-  Medium: '#ffc66d',
-  Low: '#4facfe',
+  Critical: tokens.danger,
+  High: tokens.orange,
+  Medium: tokens.amber,
+  Low: tokens.info,
 }
 
 function PoliceDashboard({ overview = false }) {
@@ -82,7 +83,7 @@ function PoliceDashboard({ overview = false }) {
         title={overview ? 'Operations overview' : 'Police demo dashboard'}
         description="Review a local set of sample assistance alerts and try the triage controls."
         action={
-          <span className="pill pill-lime">
+          <span className="pill pill-accent">
             <Radio size={12} /> SIMULATED FEED
           </span>
         }
@@ -107,7 +108,7 @@ function PoliceDashboard({ overview = false }) {
           ['Open incidents', activeCount, Siren, 'rgba(255,119,124,.17)'],
           ['New', alerts.filter((item) => item.status === 'New').length, AlertTriangle, 'rgba(255,119,124,.1)'],
           ['In Progress', alerts.filter((item) => item.status === 'In Progress').length, Activity, 'rgba(79,172,254,.1)'],
-          ['Acknowledged', alerts.filter((item) => item.status === 'Acknowledged').length, Clock3, 'rgba(198,243,106,.1)'],
+          ['Acknowledged', alerts.filter((item) => item.status === 'Acknowledged').length, Clock3, 'rgba(45,226,176,.1)'],
           ['Total records', alerts.length, Users, 'rgba(100,226,186,.1)'],
         ].map(([label, value, Icon, glow]) => (
           <article className="panel stat-card" key={label} style={{ '--stat-glow': glow }}>
@@ -203,10 +204,10 @@ function PoliceDashboard({ overview = false }) {
               style={{
                 fontSize: 11,
                 padding: '3px 8px',
-                background: 'var(--card-bg, #111722)',
+                background: 'var(--surface)',
                 border: '1px solid var(--line)',
                 borderRadius: 4,
-                color: 'var(--text-color, #e6edf3)',
+                color: 'var(--text)',
               }}
             >
               <option value="All">All Severities</option>
@@ -224,10 +225,10 @@ function PoliceDashboard({ overview = false }) {
               style={{
                 fontSize: 11,
                 padding: '3px 8px',
-                background: 'var(--card-bg, #111722)',
+                background: 'var(--surface)',
                 border: '1px solid var(--line)',
                 borderRadius: 4,
-                color: 'var(--text-color, #e6edf3)',
+                color: 'var(--text)',
               }}
             >
               <option value="All">All Categories</option>
@@ -285,7 +286,7 @@ function PoliceDashboard({ overview = false }) {
                       width: '100%',
                       border: 0,
                       borderBottom: '1px solid var(--line)',
-                      background: selected?.id === alert.id ? 'rgba(198,243,106,.05)' : 'transparent',
+                      background: selected?.id === alert.id ? 'rgba(45,226,176,.05)' : 'transparent',
                       textAlign: 'left',
                       padding: '8px 10px',
                       borderRadius: 10,
@@ -295,7 +296,7 @@ function PoliceDashboard({ overview = false }) {
                     <span
                       className="row-icon"
                       style={{
-                        color: alert.status === 'New' ? 'var(--coral)' : 'var(--lime)',
+                        color: alert.status === 'New' ? 'var(--coral)' : 'var(--accent)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -326,7 +327,7 @@ function PoliceDashboard({ overview = false }) {
                       </span>
                     </span>
 
-                    <span className={`pill ${alert.status === 'New' ? 'pill-coral' : alert.status === 'Resolved' ? 'pill-mint' : alert.status === 'In Progress' ? 'pill-quiet' : 'pill-lime'}`} style={{ fontSize: 10 }}>
+                    <span className={`pill ${alert.status === 'New' ? 'pill-coral' : alert.status === 'Resolved' ? 'pill-accent' : alert.status === 'In Progress' ? 'pill-quiet' : 'pill-accent'}`} style={{ fontSize: 10 }}>
                       {alert.status}
                     </span>
                   </button>
@@ -364,7 +365,7 @@ function PoliceDashboard({ overview = false }) {
                   >
                     {selectedSeverity}
                   </span>
-                  <span className={`pill ${selected.status === 'New' ? 'pill-coral' : selected.status === 'Resolved' ? 'pill-mint' : selected.status === 'In Progress' ? 'pill-quiet' : 'pill-lime'}`}>
+                  <span className={`pill ${selected.status === 'New' ? 'pill-coral' : selected.status === 'Resolved' ? 'pill-accent' : selected.status === 'In Progress' ? 'pill-quiet' : 'pill-accent'}`}>
                     {selected.status}
                   </span>
                 </div>
@@ -454,11 +455,11 @@ function PoliceDashboard({ overview = false }) {
                           padding: '6px 8px',
                           background: 'rgba(255,255,255,0.02)',
                           borderRadius: 6,
-                          borderLeft: `3px solid ${h.status === 'Resolved' ? 'var(--mint)' : 'var(--lime)'}`,
+                          borderLeft: `3px solid ${h.status === 'Resolved' ? 'var(--accent)' : 'var(--accent)'}`,
                         }}
                       >
                         <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--muted)', fontSize: 10 }}>
-                          <span style={{ fontWeight: 600, color: 'var(--text-color, #e6edf3)' }}>{h.status}</span>
+                          <span style={{ fontWeight: 600, color: 'var(--text)' }}>{h.status}</span>
                           <span>{new Date(h.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</span>
                         </div>
                         <div style={{ marginTop: 2, color: 'var(--muted)' }}>{h.note}</div>

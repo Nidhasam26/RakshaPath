@@ -17,6 +17,7 @@ import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet'
 import PageHeader from '../../components/PageHeader'
 import safePlacesService from '../../services/safePlacesService'
 import { SAFE_PLACE_CATEGORIES } from '../../data/safePlacesData'
+import { tokens } from '../../theme/tokens'
 import 'leaflet/dist/leaflet.css'
 
 const CATEGORY_ICONS = {
@@ -27,10 +28,10 @@ const CATEGORY_ICONS = {
 }
 
 const CATEGORY_COLORS = {
-  [SAFE_PLACE_CATEGORIES.HOSPITAL]: '#ff777c',
-  [SAFE_PLACE_CATEGORIES.POLICE]: '#4facfe',
-  [SAFE_PLACE_CATEGORIES.PHARMACY]: '#64e2ba',
-  [SAFE_PLACE_CATEGORIES.TRANSIT]: '#c6f36a',
+  [SAFE_PLACE_CATEGORIES.HOSPITAL]: tokens.info,
+  [SAFE_PLACE_CATEGORIES.POLICE]: tokens.info,
+  [SAFE_PLACE_CATEGORIES.PHARMACY]: tokens.accent,
+  [SAFE_PLACE_CATEGORIES.TRANSIT]: tokens.accent,
 }
 
 const DEFAULT_MAP_CENTER = [12.95, 77.63]
@@ -67,7 +68,7 @@ function SafePlaces() {
         title="Nearby Safe Places"
         description="Directory of nearby emergency safe havens, medical posts, 24/7 pharmacies and transit shelters (Demonstration Sample Data)."
         action={
-          <span className="pill pill-lime">
+          <span className="pill pill-accent">
             <Compass size={12} /> SIMULATED DIRECTORY
           </span>
         }
@@ -76,7 +77,7 @@ function SafePlaces() {
       {/* Overview Hero Banner */}
       <section className="panel" style={{ padding: '16px 20px', marginBottom: 16 }}>
         <div className="eyebrow" style={{ display: 'flex', alignItems: 'center', gap: 6, margin: '0 0 6px' }}>
-          <ShieldCheck size={14} color="var(--mint)" /> COMMUNITY PROTECTION NETWORK (DEMO)
+          <ShieldCheck size={14} color="var(--accent)" /> COMMUNITY PROTECTION NETWORK (DEMO)
         </div>
         <h2 style={{ fontSize: 'clamp(18px, 2.5vw, 24px)', fontWeight: 600, margin: '0 0 6px' }}>
           Locate immediate sanctuary, medical care and emergency authorities.
@@ -166,7 +167,7 @@ function SafePlaces() {
           ) : (
             filteredPlaces.map((place) => {
               const Icon = CATEGORY_ICONS[place.category] || Shield
-              const color = CATEGORY_COLORS[place.category] || '#64e2ba'
+              const color = CATEGORY_COLORS[place.category] || '#2de2b0'
               const isSelected = selectedPlace?.id === place.id
 
               return (
@@ -175,7 +176,7 @@ function SafePlaces() {
                   className="panel panel-pad"
                   style={{
                     borderLeft: `4px solid ${color}`,
-                    background: isSelected ? 'rgba(198, 243, 106, 0.04)' : undefined,
+                    background: isSelected ? 'rgba(45, 226, 176, 0.04)' : undefined,
                     cursor: 'pointer',
                     transition: 'all 0.2s ease',
                   }}
@@ -190,9 +191,9 @@ function SafePlaces() {
                     }
                   }}
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
-                    <div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8, flexWrap: 'wrap' }}>
+                    <div style={{ minWidth: 0, flex: '1 1 200px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4, flexWrap: 'wrap' }}>
                         <span
                           style={{
                             fontSize: 10,
@@ -212,7 +213,7 @@ function SafePlaces() {
                         <span className="pill pill-quiet" style={{ fontSize: 10 }}>
                           {place.openStatus}
                         </span>
-                        <span className="pill pill-coral" style={{ fontSize: 9 }}>
+                        <span className="pill pill-blue" style={{ fontSize: 9 }}>
                           DEMO RECORD
                         </span>
                       </div>
@@ -225,7 +226,7 @@ function SafePlaces() {
                     </div>
 
                     <div style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
-                      <strong style={{ fontSize: 14, color: 'var(--lime)', display: 'block' }}>
+                      <strong style={{ fontSize: 14, color: 'var(--accent)', display: 'block' }}>
                         {place.distanceKm} km
                       </strong>
                       <span className="muted" style={{ fontSize: 10 }}>approx distance</span>
@@ -269,7 +270,7 @@ function SafePlaces() {
           <article className="panel panel-pad" style={{ padding: 0, overflow: 'hidden' }}>
             <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--line)' }}>
               <h3 style={{ fontSize: 14, margin: 0, display: 'flex', alignItems: 'center', gap: 6 }}>
-                <MapPin size={15} color="var(--lime)" /> Safe Haven Geographic Plottings
+                <MapPin size={15} color="var(--accent)" /> Safe Haven Geographic Plottings
               </h3>
               <span className="muted" style={{ fontSize: 11 }}>
                 Plotted reference sanctuary locations in Bangalore central corridor.
@@ -290,7 +291,7 @@ function SafePlaces() {
                 />
 
                 {filteredPlaces.map((p) => {
-                  const color = CATEGORY_COLORS[p.category] || '#64e2ba'
+                  const color = CATEGORY_COLORS[p.category] || tokens.accent
                   const isCurrent = selectedPlace?.id === p.id
 
                   return (
@@ -329,7 +330,7 @@ function SafePlaces() {
           {selectedPlace && (
             <article className="panel panel-pad" style={{ background: 'rgba(255, 255, 255, 0.02)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                <span className="pill pill-lime" style={{ fontSize: 9 }}>
+                <span className="pill pill-accent" style={{ fontSize: 9 }}>
                   SELECTED SANCTUARY
                 </span>
                 <span className="muted" style={{ fontSize: 11 }}>

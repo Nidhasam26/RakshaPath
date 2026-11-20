@@ -1,0 +1,124 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 120" width="100%" height="100%" fill="none">
+  <defs>
+    <!-- Left Wing Gradient: Mint -->
+    <linearGradient id="rp-h-mint" x1="20" y1="20" x2="60" y2="105" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="35%" stop-color="#2dd4bf" />
+      <stop offset="100%" stop-color="#64e2ba" />
+    </linearGradient>
+
+    <!-- Right Wing Gradient: Lime -->
+    <linearGradient id="rp-h-lime" x1="100" y1="20" x2="60" y2="105" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#22c55e" />
+      <stop offset="50%" stop-color="#84cc16" />
+      <stop offset="100%" stop-color="#c6f36a" />
+    </linearGradient>
+
+    <!-- Path / Road Gradient -->
+    <linearGradient id="rp-h-path" x1="60" y1="102" x2="60" y2="46" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#0b0f17" stop-opacity="0.8" />
+      <stop offset="60%" stop-color="#1e293b" stop-opacity="0.95" />
+      <stop offset="100%" stop-color="#c6f36a" />
+    </linearGradient>
+
+    <radialGradient id="rp-h-coral-glow" cx="60" cy="42" r="14" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#ff777c" />
+      <stop offset="70%" stop-color="#f43f5e" />
+      <stop offset="100%" stop-color="#be123c" stop-opacity="0" />
+    </radialGradient>
+  </defs>
+
+  <!-- EMBLEM GROUP (Placed on Left: x=10..110, y=10..110) -->
+  <g transform="translate(10, 10)">
+    <!-- Ambient Halo -->
+    <circle cx="50" cy="50" r="38" fill="url(#rp-h-coral-glow)" opacity="0.16" />
+
+    <!-- Left Wing (Scaled to 100x100) -->
+    <path
+      d="M 50 12
+         C 36 12, 17 19, 15 36
+         C 13 52, 29 69, 50 88
+         L 50 71
+         C 35 58, 25 47, 27 37
+         C 28 27, 40 21, 50 21
+         Z"
+      fill="url(#rp-h-mint)"
+    />
+
+    <!-- Right Wing -->
+    <path
+      d="M 50 12
+         C 64 12, 83 19, 85 36
+         C 87 52, 71 69, 50 88
+         L 50 71
+         C 65 58, 75 47, 73 37
+         C 72 27, 60 21, 50 21
+         Z"
+      fill="url(#rp-h-lime)"
+    />
+
+    <!-- Inner Safe Pathway -->
+    <path
+      d="M 43 85
+         L 57 85
+         L 53 45
+         C 53 45, 50 43, 47 45
+         Z"
+      fill="url(#rp-h-path)"
+    />
+
+    <!-- Pathway Dash -->
+    <path
+      d="M 50 81 L 50 70 M 50 63 L 50 55 M 50 49 L 50 44"
+      stroke="#c6f36a"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-dasharray="0.1 5"
+    />
+
+    <!-- Protective Core Beacon Ring -->
+    <circle
+      cx="50"
+      cy="35"
+      r="11"
+      fill="#0b0f17"
+      stroke="#64e2ba"
+      stroke-width="2.2"
+    />
+
+    <!-- Emergency Star -->
+    <path
+      d="M 50 27
+         Q 50 35, 58 35
+         Q 50 35, 50 43
+         Q 50 35, 42 35
+         Q 50 35, 50 27
+         Z"
+      fill="#ff777c"
+    />
+
+    <circle cx="50" cy="35" r="1.8" fill="#ffffff" />
+  </g>
+
+  <!-- TYPOGRAPHY / WORDMARK (Placed on Right: x=135) -->
+  <g transform="translate(132, 0)">
+    <!-- Primary Brand Wordmark: "RakshaPath" -->
+    <text x="0" y="65" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Inter', sans-serif" font-size="44" font-weight="800" letter-spacing="-0.03em">
+      <tspan fill="#ffffff">Raksha</tspan><tspan fill="#c6f36a">Path</tspan>
+    </text>
+
+    <!-- Subtitle Category / Platform Specifier -->
+    <text x="2" y="88" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Inter', sans-serif" font-size="12" font-weight="600" fill="#94a3b8" letter-spacing="0.22em">
+      INTELLIGENT SAFETY NAVIGATION
+    </text>
+
+    <!-- Emergency Assurance Pill Accent -->
+    <g transform="translate(345, 42)">
+      <rect x="0" y="0" width="36" height="18" rx="9" fill="rgba(255, 119, 124, 0.14)" stroke="#ff777c" stroke-width="1" />
+      <circle cx="9" cy="9" r="3" fill="#ff777c" />
+      <text x="16" y="12" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="8.5" font-weight="700" fill="#ff777c" letter-spacing="0.05em">
+        SOS
+      </text>
+    </g>
+  </g>
+</svg>

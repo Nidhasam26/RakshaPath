@@ -22,3 +22,18 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Local SSL Certificates & Keys (Never commit)
+certs/
+.certs/
+*.pem
+*.crt
+*.key
+*.pfx
+
+# Artifacts, screenshots & temporary test profiles
+artifacts/
+.chrome-temp*/
+screenshots/
+
+

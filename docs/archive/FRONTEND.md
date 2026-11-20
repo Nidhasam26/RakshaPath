@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> **SUPERSEDED (2026-11-20)**: This document described the early dual-client architecture (`/frontend/mobile` Flutter and `/frontend/dashboard`). It has been superseded by the unified React + Vite web platform in `frontend/web`. For the current frontend specification and architecture, see [README.md](../../README.md), [DESIGN.md](../../DESIGN.md), [PRD.md](../../PRD.md), and [FRONTEND_WEB.md](../FRONTEND_WEB.md).
+
 # RakshaPath Frontend Architecture & Directory Structure
 
 This document outlines the frontend structure for both client projects:

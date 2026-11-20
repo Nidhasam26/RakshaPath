@@ -22,14 +22,14 @@ export function NotFound() {
           width: 64,
           height: 64,
           borderRadius: '50%',
-          background: 'rgba(163, 230, 53, 0.12)',
-          color: 'var(--lime, #a3e635)',
+          background: 'rgba(45, 226, 176, 0.12)',
+          color: 'var(--accent)',
           marginBottom: 18,
         }}
       >
         <Compass size={32} />
       </div>
-      <span className="pill pill-lime" style={{ marginBottom: 12 }}>
+      <span className="pill pill-accent" style={{ marginBottom: 12 }}>
         404 · PAGE NOT FOUND
       </span>
       <h1 style={{ fontSize: 28, fontWeight: 700, margin: '0 0 10px', letterSpacing: '-0.03em' }}>

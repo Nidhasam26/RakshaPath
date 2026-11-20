@@ -1,6 +1,7 @@
-import { Activity, Bell, ChevronLeft, ChevronRight, Compass, LayoutDashboard, LogOut, Map, Phone, Route, Settings, Shield, ShieldAlert, Users } from 'lucide-react'
+import { Activity, Bell, ChevronLeft, ChevronRight, Compass, LayoutDashboard, LogOut, Map, Phone, Route, Settings, ShieldAlert, Users } from 'lucide-react'
 import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/useAuth'
+import { Logo } from '../common/Logo'
 
 const navigationByRole = {
   Traveller: [
@@ -61,12 +62,14 @@ function Sidebar({ collapsed, setCollapsed, mobileOpen, onCloseMobile }) {
     >
       <Link to="/dashboard" className="brand" onClick={handleNavClick} aria-label="RakshaPath home">
         <span className="brand-mark">
-          <Shield size={20} />
+          <Logo variant="icon" size={34} />
         </span>
         {!collapsed && (
-          <span>
-            <span className="brand-name">RakshaPath</span>
-            <span className="brand-sub">TRAVEL WITH CLARITY</span>
+          <span className="brand-text">
+            <span className="brand-name">
+              <span>Raksha</span>
+              <span className="brand-accent">Path</span>
+            </span>
           </span>
         )}
       </Link>

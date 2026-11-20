@@ -6,7 +6,9 @@ export function PublicOnlyRoute({ children }) {
   const location = useLocation()
 
   if (isAuthenticated && user) {
-    const destination = location.state?.from?.pathname || '/dashboard'
+    const roleDefault =
+      user.role === 'Police' ? '/police' : user.role === 'Family' ? '/family' : '/dashboard'
+    const destination = location.state?.from?.pathname || roleDefault
     return <Navigate to={destination} replace />
   }
 

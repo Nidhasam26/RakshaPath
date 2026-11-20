@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { ArrowRight, LockKeyhole, Mail, ShieldCheck, UserRound } from 'lucide-react'
 import { useAuth } from '../../context/useAuth'
 import AuthShell from '../../components/auth/AuthShell'
+import { Logo } from '../../components/common/Logo'
 
 function Register({ onNavigate }) {
   const { register } = useAuth()
@@ -48,23 +49,24 @@ function Register({ onNavigate }) {
 
   return (
     <AuthShell eyebrow="Start with a little more clarity">
-      <div className="eyebrow">
-        <ShieldCheck size={14} /> Create your account
+      <div className="auth-brand-header">
+        <Logo variant="full" size={190} />
       </div>
-      <h2 style={{ marginTop: 12 }}>Your journey, considered.</h2>
+      <div className="auth-eyebrow">
+        <ShieldCheck size={13} /> CREATE YOUR ACCOUNT
+      </div>
+      <h2 className="auth-title">Your journey, considered.</h2>
       <p className="auth-lead">Set up your local demo workspace in a moment.</p>
-      <form onSubmit={submit} className="grid" style={{ gap: 12 }} noValidate>
+      <form onSubmit={submit} className="grid auth-form" style={{ gap: 14 }} noValidate>
         <div className="field">
           <label htmlFor="register-name">Full name</label>
-          <div style={{ position: 'relative' }}>
+          <div className="auth-input-wrapper">
             <UserRound
               size={16}
-              color="#74808a"
-              style={{ position: 'absolute', left: 13, top: 14 }}
+              className="auth-input-icon"
             />
             <input
-              className="input"
-              style={{ paddingLeft: 40 }}
+              className="input auth-input"
               id="register-name"
               value={form.name}
               onChange={update('name')}
@@ -76,15 +78,13 @@ function Register({ onNavigate }) {
         </div>
         <div className="field">
           <label htmlFor="register-email">Email address</label>
-          <div style={{ position: 'relative' }}>
+          <div className="auth-input-wrapper">
             <Mail
               size={16}
-              color="#74808a"
-              style={{ position: 'absolute', left: 13, top: 14 }}
+              className="auth-input-icon"
             />
             <input
-              className="input"
-              style={{ paddingLeft: 40 }}
+              className="input auth-input"
               id="register-email"
               type="email"
               value={form.email}
@@ -98,30 +98,28 @@ function Register({ onNavigate }) {
         <div className="form-grid">
           <div className="field">
             <label htmlFor="register-password">Password</label>
-            <div style={{ position: 'relative' }}>
+            <div className="auth-input-wrapper">
               <LockKeyhole
-                size={15}
-                color="#74808a"
-                style={{ position: 'absolute', left: 13, top: 14 }}
+                size={16}
+                className="auth-input-icon"
               />
               <input
-                className="input"
-                style={{ paddingLeft: 38 }}
+                className="input auth-input"
                 id="register-password"
                 type="password"
                 value={form.password}
                 onChange={update('password')}
-                placeholder="At least 6 characters"
+                placeholder="At least 6 chars"
                 autoComplete="new-password"
                 required
-                minLength={6}
               />
             </div>
           </div>
           <div className="field">
             <label htmlFor="confirm-password">Confirm password</label>
             <input
-              className="input"
+              className="input auth-input"
+              style={{ paddingLeft: 14 }}
               id="confirm-password"
               type="password"
               value={form.confirmPassword}
@@ -134,24 +132,24 @@ function Register({ onNavigate }) {
         </div>
         <div className="field">
           <label htmlFor="register-role">Workspace role</label>
-          <select className="select" id="register-role" value={form.role} onChange={update('role')}>
+          <select className="select auth-select" id="register-role" value={form.role} onChange={update('role')}>
             <option value="Traveller">Traveller</option>
             <option value="Family">Family member</option>
             <option value="Police">Police demo operator</option>
           </select>
         </div>
         {error && (
-          <p role="alert" style={{ margin: 0, color: 'var(--coral)', fontSize: 11 }}>
+          <p role="alert" className="auth-error-message">
             {error}
           </p>
         )}
-        <button className="btn btn-primary" type="submit" style={{ width: '100%', marginTop: 3 }}>
+        <button className="btn btn-primary auth-submit-btn" type="submit">
           Create account <ArrowRight size={15} />
         </button>
       </form>
       <div className="auth-footer">
-        Already have an account?{' '}
-        <Link to="/login" onClick={() => onNavigate?.('Login')}>
+        <span className="auth-footer-text">Already have an account?</span>{' '}
+        <Link to="/login" className="auth-accent-link" onClick={() => onNavigate?.('Login')}>
           Sign in
         </Link>
       </div>

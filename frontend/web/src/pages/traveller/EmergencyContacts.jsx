@@ -171,7 +171,7 @@ function EmergencyContacts() {
                     <strong>
                       {contact.name}{' '}
                       {isPrimary && (
-                        <span className="pill pill-lime" style={{ marginLeft: 6 }}>
+                        <span className="pill pill-accent" style={{ marginLeft: 6 }}>
                           PRIMARY
                         </span>
                       )}
@@ -180,34 +180,36 @@ function EmergencyContacts() {
                       {contact.relationship} · {contact.phone}
                     </span>
                   </span>
-                  {contact.phone && (
-                    <a
-                      className="icon-btn"
-                      href={`tel:${contact.phone}`}
-                      title={`Call ${contact.name}`}
-                      aria-label={`Call ${contact.name}`}
-                    >
-                      <Phone size={15} />
-                    </a>
-                  )}
-                  {!isPrimary && (
+                  <div className="row-actions" style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                    {contact.phone && (
+                      <a
+                        className="icon-btn"
+                        href={`tel:${contact.phone}`}
+                        title={`Call ${contact.name}`}
+                        aria-label={`Call ${contact.name}`}
+                      >
+                        <Phone size={15} />
+                      </a>
+                    )}
+                    {!isPrimary && (
+                      <button
+                        className="btn"
+                        type="button"
+                        onClick={() => setPrimaryContact(contact.id)}
+                      >
+                        <Star size={14} /> Make primary
+                      </button>
+                    )}
                     <button
-                      className="btn"
+                      className="icon-btn"
                       type="button"
-                      onClick={() => setPrimaryContact(contact.id)}
+                      title="Remove contact"
+                      aria-label={`Remove ${contact.name}`}
+                      onClick={() => removeContact(contact.id)}
                     >
-                      <Star size={14} /> Make primary
+                      <Trash2 size={15} />
                     </button>
-                  )}
-                  <button
-                    className="icon-btn"
-                    type="button"
-                    title="Remove contact"
-                    aria-label={`Remove ${contact.name}`}
-                    onClick={() => removeContact(contact.id)}
-                  >
-                    <Trash2 size={15} />
-                  </button>
+                  </div>
                 </div>
               )
             })}

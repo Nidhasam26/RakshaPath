@@ -118,9 +118,10 @@ export function AuthProvider({ children }) {
   const login = async ({ email, password }) => {
     const normalizedEmail = email.trim().toLowerCase()
 
-    const existingUser = users.find(
-      (account) => account.email === normalizedEmail
-    )
+    const currentUsers = users.length > 0 ? users : readStorage(USERS_KEY, [])
+    const existingUser =
+      currentUsers.find((account) => account.email === normalizedEmail) ||
+      readStorage(USERS_KEY, []).find((account) => account.email === normalizedEmail)
 
     if (!existingUser) {
       return {

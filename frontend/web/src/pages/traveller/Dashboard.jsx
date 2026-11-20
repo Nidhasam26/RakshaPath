@@ -26,9 +26,16 @@ import { initialTrips } from '../../data/demoData'
 import hazardService from '../../services/hazardService'
 import tripService from '../../services/tripService'
 
-function Metric({ label, value, foot, icon: Icon, tone }) {
+function formatGreetingName(name, fallback = 'Traveller') {
+  if (!name || typeof name !== 'string') return fallback
+  const first = name.trim().split(/\s+/)[0]
+  if (!first) return fallback
+  return first.charAt(0).toUpperCase() + first.slice(1).toLowerCase()
+}
+
+function Metric({ label, value, foot, icon: Icon }) {
   return (
-    <article className="panel stat-card" style={{ '--stat-glow': tone }}>
+    <article className="panel stat-card">
       <div className="stat-top">
         <span>{label}</span>
         <span className="stat-icon">
@@ -86,12 +93,14 @@ function Dashboard() {
   }
 
   const isFamilyRole = user?.role === 'Family'
+  const fallbackGreeting = isFamilyRole ? 'Guardian' : 'Traveller'
+  const greetingName = formatGreetingName(user?.name, fallbackGreeting)
 
   return (
     <>
       <PageHeader
         eyebrow={isFamilyRole ? 'Family Guardian · Overview' : 'Your journey starts here'}
-        title={`Good to see you, ${user?.name?.split(' ')[0] || (isFamilyRole ? 'Guardian' : 'Traveller')}.`}
+        title={`Good to see you, ${greetingName}.`}
         description={
           isFamilyRole
             ? 'Monitor shared loved-one journeys and maintain situational awareness.'
@@ -101,7 +110,7 @@ function Dashboard() {
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
             {/* Network connectivity pill */}
             <span
-              className={`pill ${isOnline ? 'pill-mint' : 'pill-coral'}`}
+              className={`pill ${isOnline ? 'pill-accent' : 'pill-coral'}`}
               role="status"
               aria-label={isOnline ? 'Online mode active' : 'Offline mode active'}
             >
@@ -123,10 +132,9 @@ function Dashboard() {
       <section className="grid stats" aria-label="Travel overview">
         <Metric
           label="Safety status"
-          value={activeTrip ? 'Active Trip' : 'Ready'}
+          value={activeTrip ? 'Active Trip' : <span style={{ color: 'var(--accent)' }}>Ready</span>}
           foot={activeTrip ? `${activeTrip.remainingKm} km remaining (Simulated)` : 'Demo environment · No live assessment'}
           icon={ShieldCheck}
-          tone={activeTrip ? 'rgba(198,243,106,.2)' : 'rgba(100,226,186,.18)'}
         />
         <Metric
           label={isFamilyRole ? 'Family Circles' : 'Your journeys'}
@@ -139,14 +147,36 @@ function Dashboard() {
           value={String(allHazards.length).padStart(2, '0')}
           foot={`${activeHazards.length} active in area`}
           icon={MapPin}
-          tone="rgba(255,198,109,.18)"
         />
         <Metric
           label="Trusted contacts"
           value={contacts.length}
-          foot={contacts.length ? 'Saved on this device' : 'Add someone you trust'}
+          foot={
+            contacts.length ? (
+              'Saved on this device'
+            ) : (
+              <button
+                type="button"
+                className="btn-quiet"
+                onClick={() => navigate('/contacts')}
+                style={{
+                  color: 'var(--accent)',
+                  padding: 0,
+                  fontSize: 11,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 3,
+                  textDecoration: 'underline',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                }}
+              >
+                + Add contact
+              </button>
+            )
+          }
           icon={Users}
-          tone="rgba(100,226,186,.13)"
         />
       </section>
 
@@ -156,15 +186,15 @@ function Dashboard() {
           <form onSubmit={handleDestinationSearch} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <label htmlFor="destination-quick-search" style={{ fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
-                <Compass size={15} color="var(--lime)" /> Plan a Safe Route (FR-15)
+                <Compass size={15} color="var(--accent)" /> Plan a Safe Route (FR-15)
               </label>
-              <span className="pill pill-quiet" style={{ fontSize: 9 }}>
+              <span className="badge-demo">
                 DEMO CORRIDOR SEARCH
               </span>
             </div>
 
-            <div style={{ display: 'flex', gap: 8 }}>
-              <div style={{ position: 'relative', flex: 1 }}>
+            <div className="destination-search-row" style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <div style={{ position: 'relative', flex: '1 1 220px', minWidth: 0 }}>
                 <input
                   id="destination-quick-search"
                   type="text"
@@ -265,8 +295,8 @@ function Dashboard() {
               <article className="panel panel-pad">
                 <CardTitle title={activeTrip ? 'Active Journey' : 'Next journey'} detail="Your plans, all in one place" />
                 {activeTrip ? (
-                  <div className="row-card" style={{ borderLeft: '3px solid var(--lime)' }}>
-                    <span className="row-icon" style={{ color: 'var(--lime)' }}>
+                  <div className="row-card" style={{ borderLeft: '3px solid var(--accent)' }}>
+                    <span className="row-icon" style={{ color: 'var(--accent)' }}>
                       <Radio size={18} />
                     </span>
                     <span className="row-main">
@@ -274,7 +304,7 @@ function Dashboard() {
                         <strong>
                           {activeTrip.start} → {activeTrip.end}
                         </strong>
-                        <span className="pill pill-lime" style={{ fontSize: 9 }}>
+                        <span className="pill pill-accent" style={{ fontSize: 9 }}>
                           {activeTrip.progress}%
                         </span>
                       </div>

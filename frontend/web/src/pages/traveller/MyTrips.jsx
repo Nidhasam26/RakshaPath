@@ -1,7 +1,8 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { CalendarDays, Check, Clock3, MapPin, Play, Plus, Route, Trash2 } from 'lucide-react'
 import useUserStorage from '../../hooks/useUserStorage'
 import { useTripTracker } from '../../hooks/useTripTracker'
+import { useGeolocation } from '../../hooks/useGeolocation'
 import ActiveTripTracker from '../../components/trips/ActiveTripTracker'
 import PageHeader from '../../components/PageHeader'
 import { initialTrips } from '../../data/demoData'
@@ -9,12 +10,46 @@ import { isNonEmptyText } from '../../utils/validation'
 
 function MyTrips() {
   const [trips, setTrips] = useUserStorage('trips', initialTrips)
-  const { activeTrip, startTrip, pauseTrip, resumeTrip, endTrip } = useTripTracker()
+  const {
+    activeTrip,
+    startTrip,
+    pauseTrip,
+    resumeTrip,
+    endTrip,
+    updateGpsPosition,
+    recalculateRoute,
+    setTripMode,
+  } = useTripTracker()
+  const {
+    location: geoLoc,
+    isTracking,
+    startWatching,
+    stopWatching,
+  } = useGeolocation()
   const [showForm, setShowForm] = useState(false)
   const [filter, setFilter] = useState('All trips')
   const [start, setStart] = useState('')
   const [end, setEnd] = useState('')
   const [error, setError] = useState('')
+
+  // Forward fresh GPS coordinates to active live trip
+  useEffect(() => {
+    if (activeTrip && (activeTrip.mode === 'live' || activeTrip.isLiveGps) && geoLoc) {
+      updateGpsPosition(geoLoc)
+    }
+  }, [activeTrip, geoLoc, updateGpsPosition])
+
+  // Stop continuous GPS tracking when active trip is ended or cancelled
+  useEffect(() => {
+    if (!activeTrip && isTracking) {
+      stopWatching()
+    }
+  }, [activeTrip, isTracking, stopWatching])
+
+  const handleEndJourney = () => {
+    stopWatching()
+    endTrip()
+  }
 
   const handleStartJourney = (trip) => {
     setError('')
@@ -107,7 +142,15 @@ function MyTrips() {
           activeTrip={activeTrip}
           onPause={pauseTrip}
           onResume={resumeTrip}
-          onEnd={endTrip}
+          onEnd={handleEndJourney}
+          onRecalculate={(coords) => recalculateRoute(coords)}
+          onToggleMode={() =>
+            setTripMode(activeTrip.mode === 'live' || activeTrip.isLiveGps ? 'demo' : 'live')
+          }
+          onStartTracking={startWatching}
+          onStopTracking={stopWatching}
+          isTracking={isTracking}
+          userLocation={geoLoc}
         />
       )}
       {showForm && (
@@ -202,14 +245,14 @@ function MyTrips() {
                 </span>
                 <span className="row-main">
                   <strong>
-                    {trip.start} <span style={{ color: 'var(--lime)' }}>→</span> {trip.end}
+                    {trip.start} <span style={{ color: 'var(--accent)' }}>→</span> {trip.end}
                   </strong>
                   <span>
                     <CalendarDays size={12} style={{ verticalAlign: '-2px', marginRight: 5 }} />
                     {trip.date}
                   </span>
                 </span>
-                <span className={`pill ${trip.status === 'Completed' ? 'pill-mint' : 'pill-lime'}`}>
+                <span className="pill pill-accent">
                   {trip.status}
                 </span>
                 {trip.status === 'Planned' && (

@@ -67,7 +67,7 @@ export function FakeCallModal({ callerName = 'Dad', onClose }) {
             marginBottom: 16,
           }}
         >
-          <User size={44} color="var(--lime)" />
+          <User size={44} color="var(--accent)" />
         </div>
         <h2 style={{ fontSize: 28, margin: '0 0 6px' }}>{callerName}</h2>
         <p className="muted" style={{ fontSize: 14 }}>

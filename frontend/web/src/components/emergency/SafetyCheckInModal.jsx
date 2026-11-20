@@ -85,7 +85,7 @@ export function SafetyCheckInModal({ onClose, defaultMinutes = 15 }) {
           <X size={20} />
         </button>
 
-        <span className="pill pill-lime" style={{ marginBottom: 14 }}>
+        <span className="pill pill-accent" style={{ marginBottom: 14 }}>
           DEMO SAFETY CHECK-IN
         </span>
 
@@ -121,7 +121,7 @@ export function SafetyCheckInModal({ onClose, defaultMinutes = 15 }) {
                 fontSize: 48,
                 fontWeight: 700,
                 letterSpacing: '-0.04em',
-                color: secondsRemaining < 60 ? 'var(--coral)' : 'var(--lime)',
+                color: secondsRemaining < 60 ? 'var(--coral)' : 'var(--accent)',
                 margin: '12px 0',
                 fontVariantNumeric: 'tabular-nums',
               }}

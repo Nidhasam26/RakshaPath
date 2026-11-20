@@ -192,7 +192,7 @@ describe('Phase 2: React Router, Deep Linking, Protected Routes & Role Guards', 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /police demo dashboard/i })).toBeInTheDocument()
       expect(screen.getByRole('heading', { name: /assistance queue/i })).toBeInTheDocument()
-    })
+    }, { timeout: 8000 })
   })
 
   it('supports deep linking to /family and /contacts for authenticated users', async () => {

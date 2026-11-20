@@ -10,19 +10,20 @@ import {
   Pie,
   Cell,
 } from 'recharts'
+import { tokens } from '../../theme/tokens'
 
 const SEVERITY_COLORS = {
-  Critical: '#ff4d4d',
-  High: '#ff8c42',
-  Medium: '#ffc66d',
-  Low: '#4facfe',
+  Critical: tokens.danger,
+  High: tokens.orange,
+  Medium: tokens.amber,
+  Low: tokens.info,
 }
 
 const STATUS_COLORS = {
-  New: '#ff6b6b',
-  Acknowledged: '#ffc66d',
-  'In Progress': '#4facfe',
-  Resolved: '#64e2ba',
+  New: tokens.amber,
+  Acknowledged: tokens.orange,
+  'In Progress': tokens.info,
+  Resolved: tokens.accent,
 }
 
 export function PoliceAnalyticsCharts({ incidents = [] }) {
@@ -36,7 +37,7 @@ export function PoliceAnalyticsCharts({ incidents = [] }) {
     return Object.entries(counts).map(([name, count]) => ({
       name,
       count,
-      color: STATUS_COLORS[name] || '#c6f36a',
+      color: STATUS_COLORS[name] || tokens.accent,
     }))
   }, [incidents])
 
@@ -50,7 +51,7 @@ export function PoliceAnalyticsCharts({ incidents = [] }) {
     return Object.entries(counts).map(([name, value]) => ({
       name,
       value,
-      color: SEVERITY_COLORS[name] || '#ff4d4d',
+      color: SEVERITY_COLORS[name] || tokens.danger,
     }))
   }, [incidents])
 
@@ -78,15 +79,15 @@ export function PoliceAnalyticsCharts({ incidents = [] }) {
         <div style={{ width: '100%', height: 160 }}>
           <ResponsiveContainer width="100%" height={160} minWidth={100} minHeight={160}>
             <BarChart data={statusData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
-              <XAxis dataKey="name" stroke="#888888" fontSize={10} tickLine={false} />
-              <YAxis stroke="#888888" fontSize={10} tickLine={false} allowDecimals={false} />
+              <XAxis dataKey="name" stroke="var(--text-muted, #888888)" fontSize={10} tickLine={false} />
+              <YAxis stroke="var(--text-muted, #888888)" fontSize={10} tickLine={false} allowDecimals={false} />
               <Tooltip
                 contentStyle={{
-                  backgroundColor: '#161b22',
-                  border: '1px solid rgba(255,255,255,0.1)',
+                  backgroundColor: 'var(--surface, #161b22)',
+                  border: '1px solid var(--line, rgba(255,255,255,0.1))',
                   borderRadius: 6,
                   fontSize: 11,
-                  color: '#ffffff',
+                  color: 'var(--text-color, #ffffff)',
                 }}
               />
               <Bar dataKey="count" radius={[4, 4, 0, 0]}>
@@ -103,7 +104,7 @@ export function PoliceAnalyticsCharts({ incidents = [] }) {
       <article className="panel panel-pad" style={{ minWidth: 0 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
           <h4 style={{ fontSize: 14, margin: 0 }}>Severity Distribution</h4>
-          <span className="pill pill-quiet" style={{ fontSize: 9 }}>
+          <span className="badge-demo">
             DEMO ANALYTICS
           </span>
         </div>
@@ -128,11 +129,11 @@ export function PoliceAnalyticsCharts({ incidents = [] }) {
                 </Pie>
                 <Tooltip
                   contentStyle={{
-                    backgroundColor: '#161b22',
-                    border: '1px solid rgba(255,255,255,0.1)',
+                    backgroundColor: 'var(--surface, #161b22)',
+                    border: '1px solid var(--line, rgba(255,255,255,0.1))',
                     borderRadius: 6,
                     fontSize: 11,
-                    color: '#ffffff',
+                    color: 'var(--text-color, #ffffff)',
                   }}
                 />
               </PieChart>
@@ -166,7 +167,7 @@ export function PoliceAnalyticsCharts({ incidents = [] }) {
                     />
                     {item.name}
                   </span>
-                  <strong style={{ fontSize: 10, color: 'var(--text-color, #e6edf3)' }}>
+                  <strong style={{ fontSize: 11, color: 'var(--text)' }}>
                     {item.value} ({pct}%)
                   </strong>
                 </div>

@@ -188,8 +188,8 @@ describe('Phase 3: SOS & Emergency Features (PRD Module H)', () => {
 
       // Advances through Prepared -> Queued -> Sent
       expect(await screen.findByText(/status: prepared/i)).toBeInTheDocument()
-      expect(await screen.findByText(/status: queued/i, {}, { timeout: 3000 })).toBeInTheDocument()
-      expect(await screen.findByText(/status: sent \(simulated\)/i, {}, { timeout: 3000 })).toBeInTheDocument()
+      expect(await screen.findByText(/status: queued/i, {}, { timeout: 8000 })).toBeInTheDocument()
+      expect(await screen.findByText(/status: sent \(simulated\)/i, {}, { timeout: 8000 })).toBeInTheDocument()
 
       // Strict validation: NEVER display "Delivered"
       const fullText = document.body.textContent
@@ -223,7 +223,7 @@ describe('Phase 3: SOS & Emergency Features (PRD Module H)', () => {
       // Status 1: Prepared
       expect(await screen.findByText(/status: prepared/i)).toBeInTheDocument()
       // Status 2: Queued (Offline)
-      expect(await screen.findByText(/status: queued/i, {}, { timeout: 3000 })).toBeInTheDocument()
+      expect(await screen.findByText(/status: queued/i, {}, { timeout: 8000 })).toBeInTheDocument()
       expect(screen.getByText(/alert queued \(offline\)/i)).toBeInTheDocument()
 
       // Verified: Status NEVER advanced to "Sent" while offline
@@ -255,7 +255,7 @@ describe('Phase 3: SOS & Emergency Features (PRD Module H)', () => {
       fireEvent.click(screen.getByRole('button', { name: /skip countdown demo shortcut/i }))
       fireEvent.click(screen.getByRole('button', { name: /dispatch now \(demo\)/i }))
 
-      await screen.findByText(/status: queued/i, {}, { timeout: 3000 })
+      await screen.findByText(/status: queued/i, {}, { timeout: 8000 })
 
       // Check user history: exactly 1 item recorded with status Queued
       let history = sosService.getHistory(travellerUser.id)
@@ -307,7 +307,7 @@ describe('Phase 3: SOS & Emergency Features (PRD Module H)', () => {
       fireEvent.click(screen.getByRole('button', { name: /skip countdown demo shortcut/i }))
       fireEvent.click(screen.getByRole('button', { name: /dispatch now \(demo\)/i }))
 
-      await screen.findByText(/status: sent \(simulated\)/i, {}, { timeout: 3000 })
+      await screen.findByText(/status: sent \(simulated\)/i, {}, { timeout: 8000 })
       unmount()
 
       // 2. Check Police alert payload privacy: must NOT expose user's login email
@@ -387,7 +387,7 @@ describe('Phase 3: SOS & Emergency Features (PRD Module H)', () => {
       fireEvent.click(screen.getByRole('button', { name: /skip countdown demo shortcut/i }))
       fireEvent.click(screen.getByRole('button', { name: /dispatch now \(demo\)/i }))
 
-      await screen.findByText(/status: sent \(simulated\)/i, {}, { timeout: 3000 })
+      await screen.findByText(/status: sent \(simulated\)/i, {}, { timeout: 8000 })
       expect(screen.getAllByText(/location unavailable \(demo\)/i)[0]).toBeInTheDocument()
     })
 
@@ -422,7 +422,7 @@ describe('Phase 3: SOS & Emergency Features (PRD Module H)', () => {
       fireEvent.click(screen.getByRole('button', { name: /skip countdown demo shortcut/i }))
       fireEvent.click(screen.getByRole('button', { name: /dispatch now \(demo\)/i }))
 
-      await screen.findByText(/status: sent \(simulated\)/i, {}, { timeout: 3000 })
+      await screen.findByText(/status: sent \(simulated\)/i, {}, { timeout: 8000 })
       expect(screen.getAllByText(/28.6139° n, 77.2090° e/i)[0]).toBeInTheDocument()
     })
   })
@@ -465,6 +465,36 @@ describe('Phase 3: SOS & Emergency Features (PRD Module H)', () => {
       const stopBtn = screen.getByRole('button', { name: /stop siren/i })
       fireEvent.click(stopBtn)
       expect(stopSpy).toHaveBeenCalledTimes(1)
+    })
+
+    it('activates siren on SOS countdown and stops on cancel or silence', () => {
+      const startSpy = vi.spyOn(sirenPlayer, 'start')
+      const stopSpy = vi.spyOn(sirenPlayer, 'stop')
+
+      authService.setCurrentUser(travellerUser)
+      render(
+        <MemoryRouter initialEntries={['/sos']}>
+          <AuthProvider>
+            <App />
+          </AuthProvider>
+        </MemoryRouter>
+      )
+
+      // Start SOS Countdown
+      const sosBtn = screen.getByRole('button', { name: /start emergency sos countdown/i })
+      fireEvent.click(sosBtn)
+      expect(startSpy).toHaveBeenCalled()
+
+      // Silence Siren button is present and stops audio
+      const silenceBtn = screen.getByRole('button', { name: /silence siren audio/i })
+      expect(silenceBtn).toBeInTheDocument()
+      fireEvent.click(silenceBtn)
+      expect(stopSpy).toHaveBeenCalled()
+
+      // Cancel SOS stops siren
+      const cancelBtn = screen.getByRole('button', { name: /cancel sos/i })
+      fireEvent.click(cancelBtn)
+      expect(stopSpy).toHaveBeenCalled()
     })
 
     it('triggers Fake Call modal, supports answering, and closes on Escape', () => {

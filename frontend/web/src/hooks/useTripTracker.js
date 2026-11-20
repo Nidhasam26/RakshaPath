@@ -27,11 +27,17 @@ export function useTripTracker(autoTickIntervalMs = 4000) {
       }
     }
 
-    // Tab focus recovery: recalculate progress based on elapsed time if tab was backgrounded
+    // Tab focus recovery: recalculate progress based on elapsed time if tab was backgrounded in DEMO mode only
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
         const current = tripService.getActiveTrip(userId)
-        if (current && current.status === 'Active' && !current.isPaused && current.lastTickAt) {
+        const isDemo = current && current.mode !== 'live' && !current.isLiveGps
+        if (
+          isDemo &&
+          current.status === 'Active' &&
+          !current.isPaused &&
+          current.lastTickAt
+        ) {
           const elapsedSec = Math.floor((Date.now() - current.lastTickAt) / 1000)
           if (elapsedSec >= 4) {
             const steps = Math.min(15, Math.floor(elapsedSec / 4))
@@ -53,9 +59,10 @@ export function useTripTracker(autoTickIntervalMs = 4000) {
     }
   }, [userId, refresh])
 
-  // Auto-tick interval when trip is active
+  // Auto-tick interval when trip is active (DEMO MODE ONLY)
   useEffect(() => {
-    if (activeTrip && activeTrip.status === 'Active' && !activeTrip.isPaused) {
+    const isDemo = activeTrip && activeTrip.mode !== 'live' && !activeTrip.isLiveGps
+    if (isDemo && activeTrip.status === 'Active' && !activeTrip.isPaused) {
       timerRef.current = setInterval(() => {
         tripService.tickProgress(userId, 4)
         refresh()
@@ -96,12 +103,42 @@ export function useTripTracker(autoTickIntervalMs = 4000) {
     return result
   }, [userId, refresh])
 
+  const updateGpsPosition = useCallback(
+    (coords, options) => {
+      const result = tripService.updateGpsPosition(userId, coords, options)
+      refresh()
+      return result
+    },
+    [userId, refresh]
+  )
+
+  const recalculateRoute = useCallback(
+    async (coords, hazards) => {
+      const result = await tripService.recalculateTripRoute(userId, coords, hazards)
+      refresh()
+      return result
+    },
+    [userId, refresh]
+  )
+
+  const setTripMode = useCallback(
+    (mode) => {
+      const result = tripService.setTripMode(userId, mode)
+      refresh()
+      return result
+    },
+    [userId, refresh]
+  )
+
   return {
     activeTrip,
     startTrip,
     pauseTrip,
     resumeTrip,
     endTrip,
+    updateGpsPosition,
+    recalculateRoute,
+    setTripMode,
     refresh,
   }
 }

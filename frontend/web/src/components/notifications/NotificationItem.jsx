@@ -8,15 +8,15 @@ const TYPE_ICONS = {
 }
 
 const TYPE_COLORS = {
-  hazard: 'var(--amber, #ffc66d)',
-  trip: 'var(--mint, #64e2ba)',
-  sos: 'var(--coral, #ff6b6b)',
-  family: 'var(--lime, #c6f36a)',
+  hazard: 'var(--amber)',
+  trip: 'var(--accent)',
+  sos: 'var(--danger)',
+  family: 'var(--accent)',
 }
 
 export function NotificationItem({ notification, onToggleRead, onDelete }) {
   const Icon = TYPE_ICONS[notification.type] || Route
-  const iconColor = TYPE_COLORS[notification.type] || 'var(--mint)'
+  const iconColor = TYPE_COLORS[notification.type] || 'var(--accent)'
 
   const formattedTime = new Intl.DateTimeFormat(undefined, {
     hour: 'numeric',
@@ -34,8 +34,8 @@ export function NotificationItem({ notification, onToggleRead, onDelete }) {
         alignItems: 'start',
         padding: '12px 14px',
         borderRadius: 10,
-        background: notification.read ? 'rgba(255, 255, 255, 0.02)' : 'rgba(100, 226, 186, 0.05)',
-        border: notification.read ? '1px solid var(--line, rgba(255,255,255,0.08))' : '1px solid rgba(100, 226, 186, 0.3)',
+        background: notification.read ? 'rgba(255, 255, 255, 0.02)' : 'rgba(45, 226, 176, 0.05)',
+        border: notification.read ? '1px solid var(--line, rgba(255,255,255,0.08))' : '1px solid rgba(45, 226, 176, 0.3)',
         transition: 'background 0.15s ease',
       }}
     >

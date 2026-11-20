@@ -1,3 +1,8 @@
+# [ARCHIVED] Product Requirements Document (PRD v4.0 - Flutter)
+> **Note: Superseded by /PRD.md (v5.1 - React + Vite). This file is preserved for historical reference.**
+
+---
+
 RakshaPath: Product Requirements Document
 Tagline: Know the danger before you reach it. Type: Mini project (team) | Platform: Android app, web police dashboard, cloud backend | Version: 3.0
 
