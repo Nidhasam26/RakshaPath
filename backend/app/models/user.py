@@ -12,8 +12,13 @@ class User(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name = Column(String(255), nullable=False)
-    phone = Column(String(32), unique=True, nullable=False, index=True)
+    email = Column(String(255), unique=True, nullable=True, index=True)
+    phone = Column(String(32), unique=True, nullable=True, index=True)
+    password_hash = Column(String(255), nullable=False, default="")
+    role = Column(String(64), nullable=False, default="user")
     push_token = Column(String(512), nullable=True)
+    reset_token = Column(String(255), nullable=True, index=True)
+    reset_token_expires_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     contacts = relationship("Contact", back_populates="user", cascade="all, delete-orphan")

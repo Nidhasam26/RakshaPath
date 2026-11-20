@@ -3,7 +3,7 @@ from sqlalchemy import engine_from_config, pool
 from alembic import context
 import geoalchemy2  # noqa: F401
 
-from app.core.config import settings
+from app.core.config import settings, mask_database_url
 from app.models import Base
 
 # this is the Alembic Config object, which provides
@@ -14,6 +14,15 @@ config = context.config
 # This line sets up loggers basically.
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
+
+import sys
+
+if not settings.DATABASE_URL:
+    print("\n" + "=" * 75, file=sys.stderr)
+    print("ALEMBIC ERROR: DATABASE_URL is not configured!", file=sys.stderr)
+    print("Please set DATABASE_URL in backend/.env before running migrations.", file=sys.stderr)
+    print("=" * 75 + "\n", file=sys.stderr)
+    sys.exit(1)
 
 # Override sqlalchemy.url with environment configuration
 config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
@@ -57,15 +66,44 @@ def run_migrations_online() -> None:
         poolclass=pool.NullPool,
     )
 
-    with connectable.connect() as connection:
-        context.configure(
-            connection=connection,
-            target_metadata=target_metadata,
-            include_object=include_object,
-        )
+    try:
+        with connectable.connect() as connection:
+            context.configure(
+                connection=connection,
+                target_metadata=target_metadata,
+                include_object=include_object,
+            )
 
-        with context.begin_transaction():
-            context.run_migrations()
+            with context.begin_transaction():
+                context.run_migrations()
+    except Exception as exc:
+        err_str = str(exc)
+        print("\n" + "=" * 75, file=sys.stderr)
+        print("DATABASE CONNECTION / MIGRATION FAILED", file=sys.stderr)
+        print("-" * 75, file=sys.stderr)
+        print(f"Connection URL: {mask_database_url(settings.DATABASE_URL)}", file=sys.stderr)
+        if "failed to resolve host" in err_str or "could not translate host name" in err_str:
+            if "'db'" in err_str or "@db:" in settings.DATABASE_URL or "@db/" in settings.DATABASE_URL:
+                print("\nWhat failed: Could not resolve hostname 'db'.", file=sys.stderr)
+                print("Likely fix:  The hostname 'db' only works inside Docker.", file=sys.stderr)
+                print("             Put your cloud database URL in backend/.env.", file=sys.stderr)
+            elif "ep-xyz" in settings.DATABASE_URL:
+                print("\nWhat failed: 'ep-xyz.neon.tech' is an example placeholder URL.", file=sys.stderr)
+                print("Likely fix:  Replace the placeholder in backend/.env with your actual Neon/Supabase DATABASE_URL.", file=sys.stderr)
+            else:
+                print("\nWhat failed: Could not resolve database hostname.", file=sys.stderr)
+                print("Likely fix:  Check your internet connection or verify the database hostname spelling in backend/.env.", file=sys.stderr)
+        elif "password authentication failed" in err_str:
+            print("\nWhat failed: Database authentication failed.", file=sys.stderr)
+            print("Likely fix:  Check the username and password in your DATABASE_URL inside backend/.env.", file=sys.stderr)
+        elif "Connection refused" in err_str or "connection to server at" in err_str:
+            print("\nWhat failed: Database connection was refused or timed out.", file=sys.stderr)
+            print("Likely fix:  Ensure your database server is running or verify your cloud PostgreSQL endpoint.", file=sys.stderr)
+        else:
+            print(f"\nWhat failed: {err_str}", file=sys.stderr)
+            print("Likely fix:  Check your DATABASE_URL in backend/.env.", file=sys.stderr)
+        print("=" * 75 + "\n", file=sys.stderr)
+        sys.exit(1)
 
 
 if context.is_offline_mode():
