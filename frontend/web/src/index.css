@@ -6,9 +6,10 @@
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
-  color: #ffffff;
-  background: var(--bg);
+  -moz-osx-font-smoothing: grayscale;
   --bg: #070d1f;
+  background: var(--bg);
+  color: #ffffff;
   --surface: #0e172e;
   --panel: var(--surface);
   --panel-raised: #141f3b;
@@ -481,8 +482,8 @@ a {
   border: 1px solid var(--line);
   border-radius: 14px;
   box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6), 0 2px 10px rgba(0, 0, 0, 0.35);
-  backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
   z-index: 1000;
   overflow: hidden;
   animation: dropdownFadeIn 0.15s ease-out;
@@ -1255,8 +1256,8 @@ a {
   background: rgba(7, 13, 31, 0.8) !important;
   color: var(--text-muted) !important;
   border-radius: 6px 0 0 0;
-  backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
 }
 
 :root:not([data-theme="light"]) .leaflet-control-attribution a {
@@ -1445,8 +1446,8 @@ td {
     linear-gradient(to right, rgba(255, 255, 255, 0.07) 1px, transparent 1px),
     linear-gradient(to bottom, rgba(255, 255, 255, 0.07) 1px, transparent 1px);
   background-size: 48px 48px;
-  mask-image: radial-gradient(ellipse 75% 75% at 50% 50%, black 30%, transparent 85%);
   -webkit-mask-image: radial-gradient(ellipse 75% 75% at 50% 50%, black 30%, transparent 85%);
+  mask-image: radial-gradient(ellipse 75% 75% at 50% 50%, black 30%, transparent 85%);
   pointer-events: none;
   z-index: 0;
 }
@@ -1588,8 +1589,8 @@ td {
   border-radius: 16px;
   padding: 16px 18px;
   box-shadow: 0 16px 36px -8px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
 }
 
 .auth-hero-card-head {
@@ -1676,8 +1677,8 @@ td {
   background: rgba(14, 23, 46, 0.85);
   border: 1px solid rgba(255, 152, 56, 0.35);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
   pointer-events: none;
 }
 
@@ -2231,7 +2232,7 @@ td {
     padding-inline: 12px;
   }
 
-  .sidebar.mobile-open .sidebar-bottom>button:last-child {
+  .sidebar.mobile-open .sidebar-bottom > button:last-child {
     display: none;
   }
 
@@ -2338,8 +2339,7 @@ td {
   }
 
   [role="dialog"] > .panel {
-    max-height: 90dvh !important;
-    max-height: 90vh !important;
+    max-height: min(90vh, 90dvh) !important;
     width: 100% !important;
     padding: 16px 14px !important;
   }
@@ -2650,8 +2650,8 @@ td {
   *::before,
   *::after {
     scroll-behavior: auto !important;
-    animation-duration: .01ms !important;
+    animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
-    transition-duration: .01ms !important;
+    transition-duration: 0.01ms !important;
   }
 }
